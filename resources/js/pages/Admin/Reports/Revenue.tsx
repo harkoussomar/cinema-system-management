@@ -38,8 +38,38 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
         period: period,
     });
 
+    // Reference to track previous filter state
+    const prevFiltersRef = useRef({ film_id: filters.film_id || '', period });
+
     const chartRef = useRef<HTMLCanvasElement>(null);
     const chartInstance = useRef<Chart | null>(null);
+
+    // Add useEffect for automatic filter application when film selection changes
+    useEffect(() => {
+        // Don't run on initial mount
+        if (prevFiltersRef.current.film_id !== data.film_id) {
+            // Get the film ID ready for the query
+            let filmIdParam = data.film_id;
+
+            // For empty value (All Films), pass null instead of empty string
+            if (filmIdParam === '') {
+                filmIdParam = null;
+            }
+
+            // Make the request
+            get(route('admin.reports.revenue'), {
+                data: {
+                    film_id: filmIdParam,
+                    period: data.period
+                },
+                preserveState: true,
+                replace: true,
+            });
+
+            // Update previous filters reference
+            prevFiltersRef.current = { ...prevFiltersRef.current, film_id: data.film_id };
+        }
+    }, [data.film_id]);
 
     useEffect(() => {
         if (chartRef.current) {
@@ -118,16 +148,32 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
 
     const handlePeriodChange = (period: string) => {
         setData('period', period);
+        // Update previous filters reference
+        prevFiltersRef.current = { ...prevFiltersRef.current, period };
+
+        // Get the film ID ready for the query
+        let filmIdParam = data.film_id;
+
+        // For empty value (All Films), pass null instead of empty string
+        if (filmIdParam === '') {
+            filmIdParam = null;
+        }
+
+        // Make the request
         get(route('admin.reports.revenue'), {
+            data: {
+                film_id: filmIdParam,
+                period: period
+            },
             preserveState: true,
+            replace: true,
         });
     };
 
+    // This function is no longer needed as the useEffect handles changes
+    // but we'll keep it for reference and compatibility
     const handleFilmChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setData('film_id', e.target.value);
-        get(route('admin.reports.revenue'), {
-            preserveState: true,
-        });
     };
 
     const formatCurrency = (amount: number) => {
@@ -136,6 +182,14 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
             currency: 'USD',
         }).format(amount);
     };
+
+    // Calculate transaction count and average from filmRevenue
+    const transactionCount = filmRevenue.reduce((acc, item) => acc + item.count, 0);
+
+    // Calculate average transaction safely (avoid division by zero)
+    const avgTransaction = transactionCount > 0
+        ? totalRevenue / transactionCount
+        : 0;
 
     return (
         <AdminLayout title="Revenue Report" subtitle="Track your cinema's financial performance">
@@ -181,54 +235,45 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                 <div className="p-4">
                     <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
                         <div>
-                            <h3 className="text-foreground mb-2 text-base font-medium">Time Period</h3>
                             <div className="flex flex-wrap gap-2">
                                 <button
                                     onClick={() => handlePeriodChange('week')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        data.period === 'week' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'week' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        }`}
                                 >
                                     Last Week
                                 </button>
                                 <button
                                     onClick={() => handlePeriodChange('month')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        data.period === 'month' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'month' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        }`}
                                 >
                                     Last Month
                                 </button>
                                 <button
                                     onClick={() => handlePeriodChange('quarter')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        data.period === 'quarter' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'quarter' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        }`}
                                 >
                                     Last Quarter
                                 </button>
                                 <button
                                     onClick={() => handlePeriodChange('year')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        data.period === 'year' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'year' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        }`}
                                 >
                                     Last Year
                                 </button>
                                 <button
                                     onClick={() => handlePeriodChange('all')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        data.period === 'all' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'all' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        }`}
                                 >
                                     All Time
                                 </button>
                             </div>
                         </div>
                         <div className="w-full md:w-64">
-                            <label htmlFor="film_id" className="text-foreground mb-1.5 block text-sm font-medium">
-                                Filter by Film
-                            </label>
                             <select
                                 id="film_id"
                                 value={data.film_id}
@@ -265,7 +310,7 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-muted-foreground mb-1 text-sm font-medium">Total Transactions</p>
-                            <h4 className="text-foreground text-2xl font-bold">{filmRevenue.reduce((acc, item) => acc + item.count, 0)}</h4>
+                            <h4 className="text-foreground text-2xl font-bold">{transactionCount}</h4>
                         </div>
                         <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -285,7 +330,7 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                         <div>
                             <p className="text-muted-foreground mb-1 text-sm font-medium">Avg. Transaction</p>
                             <h4 className="text-foreground text-2xl font-bold">
-                                {formatCurrency(totalRevenue / (filmRevenue.reduce((acc, item) => acc + item.count, 0) || 1))}
+                                {formatCurrency(avgTransaction)}
                             </h4>
                         </div>
                         <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full">

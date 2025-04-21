@@ -1,7 +1,7 @@
 import AdminLayout from '@/layouts/AdminLayout';
 import { CalendarIcon, ClockIcon, FilmIcon, MagnifyingGlassIcon, CreditCardIcon } from '@heroicons/react/24/outline';
 import { Head, Link, useForm } from '@inertiajs/react';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface Film {
     id: number;
@@ -46,12 +46,39 @@ export default function Screenings({ screenings, films, filters }: Props) {
         is_future: filters.is_future || 'false',
     });
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        get(route('admin.reports.screenings'), {
-            preserveState: true,
-        });
-    };
+    // Reference to track previous filter state
+    const prevFiltersRef = useRef({
+        film_id: filters.film_id || '',
+        date: filters.date || '',
+        is_full: filters.is_full || 'false',
+        is_future: filters.is_future || 'false',
+    });
+
+    // Apply filters automatically when they change
+    useEffect(() => {
+        // Check if any filter has changed to avoid unnecessary requests
+        if (
+            prevFiltersRef.current.film_id !== data.film_id ||
+            prevFiltersRef.current.date !== data.date ||
+            prevFiltersRef.current.is_full !== data.is_full ||
+            prevFiltersRef.current.is_future !== data.is_future
+        ) {
+            // Update previous filter state
+            prevFiltersRef.current = { ...data };
+
+            // Make the request
+            get(route('admin.reports.screenings'), {
+                data: {
+                    film_id: data.film_id || null,
+                    date: data.date || null,
+                    is_full: data.is_full,
+                    is_future: data.is_future,
+                },
+                preserveState: true,
+                replace: true,
+            });
+        }
+    }, [data.film_id, data.date, data.is_full, data.is_future]);
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -78,13 +105,12 @@ export default function Screenings({ screenings, films, filters }: Props) {
             is_full: 'false',
             is_future: 'false',
         });
-        get(route('admin.reports.screenings'), {
-            preserveState: true,
-        });
+        // The useEffect will handle submitting the form
     };
 
     const toggleCheckbox = (name: 'is_full' | 'is_future') => {
         setData(name, data[name] === 'true' ? 'false' : 'true');
+        // The useEffect will handle submitting the form
     };
 
     return (
@@ -130,12 +156,9 @@ export default function Screenings({ screenings, films, filters }: Props) {
             {/* Search and filters */}
             <div className="border-border bg-card mb-6 rounded-lg border shadow-sm">
                 <div className="p-4">
-                    <form onSubmit={handleSearch} className="space-y-4">
+                    <div className="space-y-4">
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div>
-                                <label htmlFor="film_id" className="text-foreground mb-1.5 block text-sm font-medium">
-                                    Filter by Film
-                                </label>
                                 <select
                                     id="film_id"
                                     value={data.film_id}
@@ -152,9 +175,6 @@ export default function Screenings({ screenings, films, filters }: Props) {
                             </div>
 
                             <div>
-                                <label htmlFor="date" className="text-foreground mb-1.5 block text-sm font-medium">
-                                    Filter by Date
-                                </label>
                                 <input
                                     id="date"
                                     type="date"
@@ -193,14 +213,6 @@ export default function Screenings({ screenings, films, filters }: Props) {
                         </div>
 
                         <div className="flex items-center space-x-3">
-                            <button
-                                type="submit"
-                                className="bg-primary hover:bg-primary/90 focus:ring-primary/30 flex items-center rounded-md px-4 py-2 text-sm font-medium text-white transition focus:ring-2 focus:outline-none disabled:opacity-70"
-                                disabled={processing}
-                            >
-                                <MagnifyingGlassIcon className="mr-1.5 h-4 w-4" />
-                                Filter
-                            </button>
                             {(data.film_id || data.date || data.is_full === 'true' || data.is_future === 'true') && (
                                 <button
                                     type="button"
@@ -211,7 +223,7 @@ export default function Screenings({ screenings, films, filters }: Props) {
                                 </button>
                             )}
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
 
@@ -272,26 +284,24 @@ export default function Screenings({ screenings, films, filters }: Props) {
                                                 <div className="flex items-center space-x-2">
                                                     <div className="bg-muted h-2 w-32 overflow-hidden rounded-full">
                                                         <div
-                                                            className={`h-full ${
-                                                                occupancyRate >= 90
-                                                                    ? 'bg-success'
-                                                                    : occupancyRate >= 70
-                                                                      ? 'bg-warning'
-                                                                      : occupancyRate >= 30
+                                                            className={`h-full ${occupancyRate >= 90
+                                                                ? 'bg-success'
+                                                                : occupancyRate >= 70
+                                                                    ? 'bg-warning'
+                                                                    : occupancyRate >= 30
                                                                         ? 'bg-primary'
                                                                         : 'bg-muted-foreground'
-                                                            }`}
+                                                                }`}
                                                             style={{ width: `${occupancyRate}%` }}
                                                         ></div>
                                                     </div>
                                                     <span
-                                                        className={`text-xs font-medium ${
-                                                            occupancyRate >= 90
-                                                                ? 'text-success'
-                                                                : occupancyRate >= 70
-                                                                  ? 'text-warning'
-                                                                  : 'text-muted-foreground'
-                                                        }`}
+                                                        className={`text-xs font-medium ${occupancyRate >= 90
+                                                            ? 'text-success'
+                                                            : occupancyRate >= 70
+                                                                ? 'text-warning'
+                                                                : 'text-muted-foreground'
+                                                            }`}
                                                     >
                                                         {occupancyRate.toFixed(1)}%
                                                     </span>
@@ -349,9 +359,8 @@ export default function Screenings({ screenings, films, filters }: Props) {
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${
-                                            !link.url ? 'pointer-events-none opacity-50' : ''
-                                        }`}
+                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${!link.url ? 'pointer-events-none opacity-50' : ''
+                                            }`}
                                     >
                                         Previous
                                     </Link>
@@ -361,9 +370,8 @@ export default function Screenings({ screenings, films, filters }: Props) {
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${
-                                            !link.url ? 'pointer-events-none opacity-50' : ''
-                                        }`}
+                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${!link.url ? 'pointer-events-none opacity-50' : ''
+                                            }`}
                                     >
                                         Next
                                     </Link>
@@ -373,9 +381,8 @@ export default function Screenings({ screenings, films, filters }: Props) {
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border flex h-8 w-8 items-center justify-center rounded-md border text-sm ${
-                                            link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-foreground'
-                                        } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
+                                        className={`border-border flex h-8 w-8 items-center justify-center rounded-md border text-sm ${link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-foreground'
+                                            } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
                                     >
                                         {link.label}
                                     </Link>
@@ -418,11 +425,11 @@ export default function Screenings({ screenings, films, filters }: Props) {
                                 <p className="text-foreground mt-1 text-2xl font-bold">
                                     {screenings.data.length
                                         ? (
-                                              screenings.data.reduce(
-                                                  (acc, screening) => acc + (screening.occupied_seats / screening.total_seats) * 100,
-                                                  0,
-                                              ) / screenings.data.length || 0
-                                          ).toFixed(1)
+                                            screenings.data.reduce(
+                                                (acc, screening) => acc + (screening.occupied_seats / screening.total_seats) * 100,
+                                                0,
+                                            ) / screenings.data.length || 0
+                                        ).toFixed(1)
                                         : 0}
                                     %
                                 </p>

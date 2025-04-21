@@ -6,6 +6,8 @@ import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon.js';
 import CogIcon from '@heroicons/react/24/outline/CogIcon.js';
 import FilmIcon from '@heroicons/react/24/outline/FilmIcon.js';
 import HomeIcon from '@heroicons/react/24/outline/HomeIcon.js';
+import MoonIcon from '@heroicons/react/24/outline/MoonIcon.js';
+import SunIcon from '@heroicons/react/24/outline/SunIcon.js';
 import TicketIcon from '@heroicons/react/24/outline/TicketIcon.js';
 import UserIcon from '@heroicons/react/24/outline/UserIcon.js';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon.js';
@@ -43,6 +45,7 @@ export default function AdminLayout({ children, title = 'Dashboard', subtitle }:
     const [isScrolled, setIsScrolled] = useState(false);
     const [refreshingAuth, setRefreshingAuth] = useState(false);
     const [refreshAttempts, setRefreshAttempts] = useState(0);
+    const [theme, setTheme] = useState('dark');
 
     // Get authenticated user from page props - handle different possible structures safely
     const pageProps = usePage().props as PageProps;
@@ -93,10 +96,30 @@ export default function AdminLayout({ children, title = 'Dashboard', subtitle }:
         }
     }, [hasValidUserName, refreshAttempts]);
 
-    // Always use dark mode
+    // Toggle theme function
+    const toggleTheme = () => {
+        const newTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+
+        if (newTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        localStorage.setItem('adminTheme', newTheme);
+    };
+
+    // Initialize theme from localStorage
     useEffect(() => {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('darkMode', 'true');
+        const savedTheme = localStorage.getItem('adminTheme') || 'dark';
+        setTheme(savedTheme);
+
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
     }, []);
 
     // Add scroll listener for header shadow
@@ -310,6 +333,22 @@ export default function AdminLayout({ children, title = 'Dashboard', subtitle }:
                         </div>
 
                         <div className="flex items-center gap-5 ml-4 md:ml-6">
+                            {/* Theme toggle button */}
+                            <button
+                                onClick={toggleTheme}
+                                className="flex items-center justify-center w-9 h-9 text-muted-foreground rounded-full hover:bg-accent/50 hover:text-foreground transition-colors"
+                                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                            >
+                                {theme === 'dark' ? (
+                                    <SunIcon className="w-5 h-5" />
+                                ) : (
+                                    <MoonIcon className="w-5 h-5" />
+                                )}
+                                <span className="sr-only">
+                                    {theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                                </span>
+                            </button>
+
                             {/* User profile dropdown - improved styling */}
                             <div className="relative">
                                 <button

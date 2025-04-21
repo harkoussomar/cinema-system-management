@@ -1,7 +1,7 @@
 import AdminLayout from '@/layouts/AdminLayout';
 import { CalendarIcon, ChartBarIcon, CreditCardIcon, FilmIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { Head, Link, useForm } from '@inertiajs/react';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface Film {
     id: number;
@@ -34,17 +34,37 @@ export default function Films({ films, period, filters }: Props) {
         period: period,
     });
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        get(route('admin.reports.films'), {
-            preserveState: true,
-        });
-    };
+    // Reference to track previous filter state
+    const prevFiltersRef = useRef({ search: filters.search || '', period });
+
+    // Use React's useEffect to trigger filtering when form data changes
+    useEffect(() => {
+        // Don't run on initial mount
+        if (prevFiltersRef.current.search !== data.search) {
+            const timeoutId = setTimeout(() => {
+                get(route('admin.reports.films'), {
+                    preserveState: true,
+                    replace: true,
+                });
+            }, 300);
+
+            // Update previous filters reference
+            prevFiltersRef.current = { ...prevFiltersRef.current, search: data.search };
+
+            // Clean up timeout on unmount or before next effect run
+            return () => clearTimeout(timeoutId);
+        }
+    }, [data.search]);
 
     const handlePeriodChange = (period: string) => {
         setData('period', period);
+        // Update previous filters reference
+        prevFiltersRef.current = { ...prevFiltersRef.current, period };
+
+        // No need to debounce period changes - apply immediately
         get(route('admin.reports.films'), {
             preserveState: true,
+            replace: true,
         });
     };
 
@@ -92,52 +112,46 @@ export default function Films({ films, period, filters }: Props) {
                 <div className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="mb-2 text-base font-medium text-foreground">Time Period</h3>
                             <div className="flex space-x-2">
                                 <button
                                     onClick={() => handlePeriodChange('week')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        data.period === 'week' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'week' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        }`}
                                 >
                                     Last Week
                                 </button>
                                 <button
                                     onClick={() => handlePeriodChange('month')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        data.period === 'month' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'month' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        }`}
                                 >
                                     Last Month
                                 </button>
                                 <button
                                     onClick={() => handlePeriodChange('quarter')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        data.period === 'quarter' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'quarter' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        }`}
                                 >
                                     Last Quarter
                                 </button>
                                 <button
                                     onClick={() => handlePeriodChange('year')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        data.period === 'year' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'year' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        }`}
                                 >
                                     Last Year
                                 </button>
                                 <button
                                     onClick={() => handlePeriodChange('all')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        data.period === 'all' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                    }`}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'all' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        }`}
                                 >
                                     All Time
                                 </button>
                             </div>
                         </div>
                         <div>
-                            <form onSubmit={handleSearch} className="flex items-center w-full max-w-sm space-x-2">
+                            <div className="flex items-center w-full max-w-sm">
                                 <div className="relative flex-1">
                                     <MagnifyingGlassIcon className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
                                     <input
@@ -148,14 +162,7 @@ export default function Films({ films, period, filters }: Props) {
                                         className="w-full py-2 pr-4 border rounded-md outline-none focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground pl-9 focus:outline-none"
                                     />
                                 </div>
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="px-4 py-2 text-sm font-medium text-white transition rounded-md bg-primary hover:bg-primary/90 focus:ring-primary/30 focus:ring-2 focus:outline-none disabled:opacity-70"
-                                >
-                                    Search
-                                </button>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -275,9 +282,8 @@ export default function Films({ films, period, filters }: Props) {
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${
-                                            !link.url ? 'pointer-events-none opacity-50' : ''
-                                        }`}
+                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${!link.url ? 'pointer-events-none opacity-50' : ''
+                                            }`}
                                     >
                                         Previous
                                     </Link>
@@ -287,9 +293,8 @@ export default function Films({ films, period, filters }: Props) {
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${
-                                            !link.url ? 'pointer-events-none opacity-50' : ''
-                                        }`}
+                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${!link.url ? 'pointer-events-none opacity-50' : ''
+                                            }`}
                                     >
                                         Next
                                     </Link>
@@ -299,9 +304,8 @@ export default function Films({ films, period, filters }: Props) {
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border flex h-8 w-8 items-center justify-center rounded-md border text-sm ${
-                                            link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-foreground'
-                                        } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
+                                        className={`border-border flex h-8 w-8 items-center justify-center rounded-md border text-sm ${link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-foreground'
+                                            } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
                                     >
                                         {link.label}
                                     </Link>
