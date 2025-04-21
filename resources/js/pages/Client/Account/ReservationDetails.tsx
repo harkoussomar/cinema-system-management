@@ -29,27 +29,41 @@ interface ReservationSeat {
 }
 
 interface Reservation {
-    id: number;
-    uuid: string;
+    id: number | string;
+    user_id?: number;
+    user?: {
+        id: number;
+        name: string;
+        email: string;
+    };
     status: string;
-    total_price: number;
+    total_price?: number | string;
     created_at: string;
     confirmation_code?: string;
+    guest_name?: string;
+    guest_email?: string;
+    guest_phone?: string;
     payment?: {
         id: number;
         status: string;
         payment_method: string;
         transaction_id: string;
+        amount?: number | string;
     };
-    reservationSeats: ReservationSeat[];
+    reservationSeats?: ReservationSeat[];
+    seats?: Seat[];
+    payment_status?: string;
     screening: {
         id: number;
         start_time: string;
+        room?: string;
+        price?: number;
         film: {
             id: number;
             title: string;
-            poster_url: string;
-            duration: number;
+            poster_url?: string;
+            poster_image?: string;
+            duration?: number;
         }
     }
 }
@@ -60,6 +74,19 @@ interface Props {
 }
 
 export default function ReservationDetails({ user, reservation }: Props) {
+    // Helper function to safely format prices
+    const formatPrice = (price?: number | string): string => {
+        if (price === undefined || price === null) return '0.00';
+
+        // Convert to number if it's a string
+        const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+
+        if (isNaN(numericPrice)) return '0.00';
+
+        // Return formatted price
+        return numericPrice.toFixed(2);
+    };
+
     // Format date
     const screeningDate = new Date(reservation.screening.start_time);
     const formattedDate = screeningDate.toLocaleDateString(undefined, {
@@ -75,9 +102,27 @@ export default function ReservationDetails({ user, reservation }: Props) {
         minute: '2-digit'
     });
 
-    // Format seat numbers
-    const seats = reservation.reservationSeats.map(rs => rs.seat);
-    const seatLabels = seats.map(seat => `${seat.row}${seat.number}`).sort().join(', ');
+    // Format seat numbers safely
+    let seats: Seat[] = [];
+    let seatLabels = '';
+
+    try {
+        // First try reservation.seats if available
+        if (reservation.seats && reservation.seats.length > 0) {
+            seats = reservation.seats;
+        }
+        // Then try reservationSeats
+        else if (reservation.reservationSeats && reservation.reservationSeats.length > 0) {
+            seats = reservation.reservationSeats.map(rs => rs.seat);
+        }
+
+        // Generate seat labels
+        seatLabels = seats.map(seat => `${seat.row}${seat.number}`).sort().join(', ');
+    } catch (error) {
+        console.error('Error processing seats:', error);
+        seats = [];
+        seatLabels = 'Seat information unavailable';
+    }
 
     // Handle case where user might be undefined
     if (!user) {
@@ -160,10 +205,10 @@ export default function ReservationDetails({ user, reservation }: Props) {
                             <div className="overflow-hidden border rounded-xl border-neutral-700 bg-neutral-800/50">
                                 {/* Movie Banner */}
                                 <div className="relative h-48 bg-gradient-to-r from-neutral-900 to-neutral-800">
-                                    {reservation.screening.film.poster_url && (
+                                    {(reservation.screening.film.poster_url || reservation.screening.film.poster_image) && (
                                         <div className="absolute inset-0 opacity-20">
                                             <img
-                                                src={reservation.screening.film.poster_url}
+                                                src={reservation.screening.film.poster_url || reservation.screening.film.poster_image || '/placeholder-poster.jpg'}
                                                 alt={reservation.screening.film.title}
                                                 className="object-cover w-full h-full"
                                             />
@@ -173,7 +218,7 @@ export default function ReservationDetails({ user, reservation }: Props) {
                                         <div className="flex items-center">
                                             <div className="flex-shrink-0 w-24 h-36 overflow-hidden rounded-md shadow-lg">
                                                 <img
-                                                    src={reservation.screening.film.poster_url || '/placeholder-poster.jpg'}
+                                                    src={reservation.screening.film.poster_url || reservation.screening.film.poster_image || '/placeholder-poster.jpg'}
                                                     alt={reservation.screening.film.title}
                                                     className="object-cover w-full h-full"
                                                 />
@@ -183,13 +228,12 @@ export default function ReservationDetails({ user, reservation }: Props) {
                                                 <p className="mt-1 text-sm text-neutral-300">{formattedDate}</p>
                                                 <p className="text-sm text-neutral-300">{formattedTime}</p>
                                                 <div className="mt-3">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                        reservation.status === 'confirmed'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : reservation.status === 'pending'
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${reservation.status === 'confirmed'
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : reservation.status === 'pending'
                                                             ? 'bg-yellow-100 text-yellow-800'
                                                             : 'bg-red-100 text-red-800'
-                                                    }`}>
+                                                        }`}>
                                                         {reservation.status.toUpperCase()}
                                                     </span>
                                                 </div>
@@ -221,7 +265,7 @@ export default function ReservationDetails({ user, reservation }: Props) {
 
                                             <div className="p-4 border rounded-md border-neutral-700 bg-neutral-800">
                                                 <p className="text-sm text-neutral-400">Total Price</p>
-                                                <p className="mt-1 font-medium text-white">${(reservation.total_price / 100).toFixed(2)}</p>
+                                                <p className="mt-1 font-medium text-white">${formatPrice(reservation.total_price)}</p>
                                             </div>
 
                                             {reservation.payment && (
@@ -241,13 +285,15 @@ export default function ReservationDetails({ user, reservation }: Props) {
                                     {/* Actions */}
                                     <div className="flex mt-6 space-x-4">
                                         {reservation.status === 'confirmed' && (
-                                            <Link
+                                            <a
                                                 href={route('reservations.download-ticket', reservation.id)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary/90"
                                             >
                                                 <TicketIcon className="w-4 h-4 mr-2" />
                                                 Download Ticket
-                                            </Link>
+                                            </a>
                                         )}
 
                                         <Link

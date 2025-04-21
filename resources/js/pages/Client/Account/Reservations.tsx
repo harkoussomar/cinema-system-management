@@ -12,20 +12,27 @@ interface User {
 }
 
 interface Reservation {
-    id: number;
-    uuid: string;
+    id: string | number;
+    confirmation_code: string;
+    reservation_code: string;
     status: string;
-    total_price: number;
     created_at: string;
     screening: {
         id: number;
         start_time: string;
+        room: string;
         film: {
             id: number;
             title: string;
-            poster_url: string;
+            poster_image?: string;
         };
     };
+    payment?: {
+        status: string;
+        amount: string | number;
+        payment_method: string;
+    };
+    total_price?: number | string;
 }
 
 interface Props {
@@ -34,6 +41,31 @@ interface Props {
 }
 
 export default function Reservations({ user, reservations = [] }: Props) {
+    // Helper function to safely format price
+    const formatPrice = (reservation: Reservation): string => {
+        // If payment exists and has amount
+        if (reservation.payment && reservation.payment.amount !== undefined) {
+            // Handle string or number
+            const amount = typeof reservation.payment.amount === 'string'
+                ? parseFloat(reservation.payment.amount)
+                : reservation.payment.amount;
+
+            return isNaN(amount) ? '0.00' : amount.toFixed(2);
+        }
+
+        // Fall back to total_price
+        if (reservation.total_price !== undefined) {
+            const total = typeof reservation.total_price === 'string'
+                ? parseFloat(reservation.total_price)
+                : reservation.total_price;
+
+            return isNaN(total) ? '0.00' : total.toFixed(2);
+        }
+
+        // Last resort
+        return '0.00';
+    };
+
     // Handle case where user might be undefined
     if (!user) {
         return (
@@ -119,7 +151,7 @@ export default function Reservations({ user, reservations = [] }: Props) {
                                                 <div className="flex flex-col md:flex-row">
                                                     <div className="w-24 h-32 overflow-hidden rounded-md shrink-0">
                                                         <img
-                                                            src={reservation.screening.film.poster_url || '/placeholder-poster.jpg'}
+                                                            src={reservation.screening.film.poster_image || '/placeholder-poster.jpg'}
                                                             alt={reservation.screening.film.title}
                                                             className="object-cover w-full h-full"
                                                         />
@@ -134,13 +166,12 @@ export default function Reservations({ user, reservations = [] }: Props) {
                                                             </p>
                                                             <div className="mt-2">
                                                                 <span
-                                                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                                                        reservation.status === 'completed'
-                                                                            ? 'bg-green-100 text-green-800'
-                                                                            : reservation.status === 'pending'
-                                                                              ? 'bg-yellow-100 text-yellow-800'
-                                                                              : 'bg-red-100 text-red-800'
-                                                                    }`}
+                                                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${reservation.status === 'completed'
+                                                                        ? 'bg-green-100 text-green-800'
+                                                                        : reservation.status === 'pending'
+                                                                            ? 'bg-yellow-100 text-yellow-800'
+                                                                            : 'bg-red-100 text-red-800'
+                                                                        }`}
                                                                 >
                                                                     {reservation.status}
                                                                 </span>
@@ -148,7 +179,7 @@ export default function Reservations({ user, reservations = [] }: Props) {
                                                         </div>
                                                         <div className="flex items-center justify-between mt-4">
                                                             <p className="text-sm font-medium text-white">
-                                                                Total: ${(reservation.total_price / 100).toFixed(2)}
+                                                                Total: ${formatPrice(reservation)}
                                                             </p>
                                                             <Link
                                                                 href={route('account.reservations.show', reservation.id)}
@@ -183,3 +214,4 @@ export default function Reservations({ user, reservations = [] }: Props) {
         </ClientLayout>
     );
 }
+

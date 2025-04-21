@@ -1,6 +1,7 @@
 import ClientLayout from '@/layouts/ClientLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
+import { route } from 'ziggy-js';
 import {
     BadgeCheck,
     Calendar,
@@ -39,6 +40,11 @@ interface Reservation {
     seats: Seat[];
     total_price: number | string;
     user_id?: number;
+    user?: {
+        id: number;
+        name: string;
+        email: string;
+    };
     guest_name?: string;
     guest_email?: string;
     guest_phone?: string;
@@ -50,6 +56,9 @@ interface ConfirmationProps {
 }
 
 export default function Confirmation({ reservation }: ConfirmationProps) {
+    // Get auth data for user information
+    const { auth } = usePage().props as any;
+
     // Format dates and times
     const formatDate = (dateTimeString: string) => {
         const date = new Date(dateTimeString);
@@ -301,45 +310,54 @@ export default function Confirmation({ reservation }: ConfirmationProps) {
                             </div>
 
                             {/* Customer information */}
-                            {(reservation.guest_name || reservation.user_id) && (
-                                <div className="mb-6 overflow-hidden border shadow-xl rounded-xl border-neutral-700 bg-gradient-to-b from-neutral-800/80 to-neutral-800/30 backdrop-blur-sm">
-                                    <div className="px-6 py-4 border-b border-neutral-700 bg-gradient-to-r from-neutral-800 to-neutral-900">
-                                        <h2 className="flex items-center text-xl font-semibold text-white">
-                                            <User className="w-5 h-5 mr-2 text-red-500" />
-                                            Customer Information
-                                        </h2>
-                                    </div>
-                                    <div className="divide-y divide-neutral-700">
-                                        <div className="flex items-center gap-3 p-4">
-                                            <User className="w-5 h-5 text-neutral-500" />
-                                            <div>
-                                                <p className="text-xs text-neutral-500">Name</p>
-                                                <p className="text-sm font-medium text-white">{reservation.guest_name || 'Registered user'}</p>
-                                            </div>
+                            <div className="mb-6 overflow-hidden border shadow-xl rounded-xl border-neutral-700 bg-gradient-to-b from-neutral-800/80 to-neutral-800/30 backdrop-blur-sm">
+                                <div className="px-6 py-4 border-b border-neutral-700 bg-gradient-to-r from-neutral-800 to-neutral-900">
+                                    <h2 className="flex items-center text-xl font-semibold text-white">
+                                        <User className="w-5 h-5 mr-2 text-red-500" />
+                                        Customer Information
+                                    </h2>
+                                </div>
+                                <div className="divide-y divide-neutral-700">
+                                    <div className="flex items-center gap-3 p-4">
+                                        <User className="w-5 h-5 text-neutral-500" />
+                                        <div>
+                                            <p className="text-xs text-neutral-500">Name</p>
+                                            <p className="text-sm font-medium text-white">
+                                                {reservation.guest_name ||
+                                                    (reservation.user && reservation.user.name) ||
+                                                    (auth.user && auth.user.name) ||
+                                                    'Guest User'}
+                                            </p>
                                         </div>
+                                    </div>
 
-                                        {reservation.guest_email && (
+                                    {(reservation.guest_email ||
+                                        (reservation.user && reservation.user.email) ||
+                                        (auth.user && auth.user.email)) && (
                                             <div className="flex items-center gap-3 p-4">
                                                 <Mail className="w-5 h-5 text-neutral-500" />
                                                 <div>
                                                     <p className="text-xs text-neutral-500">Email</p>
-                                                    <p className="text-sm font-medium text-white">{reservation.guest_email}</p>
+                                                    <p className="text-sm font-medium text-white">
+                                                        {reservation.guest_email ||
+                                                            (reservation.user && reservation.user.email) ||
+                                                            (auth.user && auth.user.email)}
+                                                    </p>
                                                 </div>
                                             </div>
                                         )}
 
-                                        {reservation.guest_phone && (
-                                            <div className="flex items-center gap-3 p-4">
-                                                <Phone className="w-5 h-5 text-neutral-500" />
-                                                <div>
-                                                    <p className="text-xs text-neutral-500">Phone</p>
-                                                    <p className="text-sm font-medium text-white">{reservation.guest_phone}</p>
-                                                </div>
+                                    {reservation.guest_phone && (
+                                        <div className="flex items-center gap-3 p-4">
+                                            <Phone className="w-5 h-5 text-neutral-500" />
+                                            <div>
+                                                <p className="text-xs text-neutral-500">Phone</p>
+                                                <p className="text-sm font-medium text-white">{reservation.guest_phone}</p>
                                             </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            </div>
 
                             {/* Actions */}
                             <motion.div
@@ -369,13 +387,15 @@ export default function Confirmation({ reservation }: ConfirmationProps) {
                                     whileTap={{ scale: 0.98 }}
                                     className="flex-1"
                                 >
-                                    <Link
-                                        href={`/reservations/${reservation.id}/download`}
+                                    <a
+                                        href={route('reservations.download-ticket', reservation.id)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white transition-all border rounded-md shadow-md border-neutral-600 bg-neutral-800 hover:bg-neutral-700"
                                     >
                                         <Download className="w-5 h-5 mr-2" />
                                         Download Ticket
-                                    </Link>
+                                    </a>
                                 </motion.div>
                             </motion.div>
                         </motion.div>

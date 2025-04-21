@@ -126,6 +126,14 @@ export default function SeatSelection({ screening, seatsByRow }: SeatSelectionPr
             return;
         }
 
+        // If user is not logged in, validate guest information
+        if (!auth.user) {
+            if (!form.data.guest_name || !form.data.guest_email) {
+                alert('Please fill in your name and email to continue.');
+                return;
+            }
+        }
+
         form.post(route('reservations.store', { screening: screening.id }), {
             preserveState: true,
             preserveScroll: true,
@@ -394,6 +402,15 @@ export default function SeatSelection({ screening, seatsByRow }: SeatSelectionPr
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
+                                )}
+                                {auth.user && (
+                                    <div className="border-b border-neutral-700 px-6 py-4 bg-gradient-to-r from-neutral-800 to-neutral-800/50">
+                                        <h3 className="mb-1 text-base font-medium text-white flex items-center">
+                                            <UserIcon className="mr-2 h-4 w-4 text-red-500" />
+                                            Logged in as
+                                        </h3>
+                                        <p className="text-sm text-neutral-300">{(auth.user as any).name} ({(auth.user as any).email})</p>
                                     </div>
                                 )}
 

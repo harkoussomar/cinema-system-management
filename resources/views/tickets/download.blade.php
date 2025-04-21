@@ -205,12 +205,12 @@
                 <div class="ticket-section-title">Customer Information</div>
                 <div class="ticket-detail">
                     <div class="ticket-label">Name:</div>
-                    <div class="ticket-value">{{ $reservation->guest_name ?? 'Registered User' }}</div>
+                    <div class="ticket-value">{{ $userName ?? $reservation->guest_name ?? 'Registered User' }}</div>
                 </div>
-                @if($reservation->guest_email)
+                @if(isset($userEmail) || $reservation->guest_email)
                 <div class="ticket-detail">
                     <div class="ticket-label">Email:</div>
-                    <div class="ticket-value">{{ $reservation->guest_email }}</div>
+                    <div class="ticket-value">{{ $userEmail ?? $reservation->guest_email }}</div>
                 </div>
                 @endif
                 @if($reservation->guest_phone)
