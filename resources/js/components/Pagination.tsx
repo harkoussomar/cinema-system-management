@@ -25,17 +25,17 @@ const Pagination = ({ links }: PaginationProps) => {
 
     return (
         <div className="mt-4">
-            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div className="flex items-center justify-between border-t border-border bg-background px-4 py-3 sm:px-6 rounded-md">
                 <div className="flex flex-1 justify-between sm:hidden">
                     {prevLink && prevLink.url ? (
                         <Link
                             href={prevLink.url}
-                            className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="relative inline-flex items-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
                         >
                             Previous
                         </Link>
                     ) : (
-                        <span className="relative inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500">
+                        <span className="relative inline-flex items-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed">
                             Previous
                         </span>
                     )}
@@ -43,12 +43,12 @@ const Pagination = ({ links }: PaginationProps) => {
                     {nextLink && nextLink.url ? (
                         <Link
                             href={nextLink.url}
-                            className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="relative ml-3 inline-flex items-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
                         >
                             Next
                         </Link>
                     ) : (
-                        <span className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500">
+                        <span className="relative ml-3 inline-flex items-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed">
                             Next
                         </span>
                     )}
@@ -56,7 +56,7 @@ const Pagination = ({ links }: PaginationProps) => {
 
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                     <div>
-                        <p className="text-sm text-gray-700">
+                        <p className="text-sm text-foreground">
                             Showing page <span className="font-medium">{pageLinks.find((link) => link.active)?.label || '1'}</span> of{' '}
                             <span className="font-medium">{pageLinks.length}</span> pages
                         </p>
@@ -67,9 +67,8 @@ const Pagination = ({ links }: PaginationProps) => {
                             {prevLink && (
                                 <Link
                                     href={prevLink.url || '#'}
-                                    className={`relative inline-flex items-center rounded-l-md border border-gray-300 px-2 py-2 text-sm font-medium ${
-                                        prevLink.url ? 'bg-white text-gray-500 hover:bg-gray-50' : 'cursor-not-allowed bg-gray-100 text-gray-400'
-                                    }`}
+                                    className={`relative inline-flex items-center rounded-l-md border border-border px-2 py-2 text-sm font-medium ${prevLink.url ? 'bg-card text-foreground hover:bg-muted transition-colors' : 'bg-muted text-muted-foreground cursor-not-allowed'
+                                        }`}
                                     aria-disabled={!prevLink.url}
                                 >
                                     <span className="sr-only">Previous</span>
@@ -81,13 +80,12 @@ const Pagination = ({ links }: PaginationProps) => {
                                 <Link
                                     key={link.label}
                                     href={link.url || '#'}
-                                    className={`relative inline-flex items-center border border-gray-300 px-4 py-2 text-sm font-medium ${
-                                        link.active
-                                            ? 'z-10 border-indigo-500 bg-indigo-50 text-indigo-600'
+                                    className={`relative inline-flex items-center border border-border px-4 py-2 text-sm font-medium transition-colors ${link.active
+                                            ? 'z-10 bg-primary border-primary text-primary-foreground'
                                             : link.url
-                                              ? 'bg-white text-gray-500 hover:bg-gray-50'
-                                              : 'cursor-not-allowed bg-gray-100 text-gray-400'
-                                    }`}
+                                                ? 'bg-card text-foreground hover:bg-muted'
+                                                : 'bg-muted text-muted-foreground cursor-not-allowed'
+                                        }`}
                                     aria-current={link.active ? 'page' : undefined}
                                     aria-disabled={!link.url}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
@@ -97,9 +95,8 @@ const Pagination = ({ links }: PaginationProps) => {
                             {nextLink && (
                                 <Link
                                     href={nextLink.url || '#'}
-                                    className={`relative inline-flex items-center rounded-r-md border border-gray-300 px-2 py-2 text-sm font-medium ${
-                                        nextLink.url ? 'bg-white text-gray-500 hover:bg-gray-50' : 'cursor-not-allowed bg-gray-100 text-gray-400'
-                                    }`}
+                                    className={`relative inline-flex items-center rounded-r-md border border-border px-2 py-2 text-sm font-medium ${nextLink.url ? 'bg-card text-foreground hover:bg-muted transition-colors' : 'bg-muted text-muted-foreground cursor-not-allowed'
+                                        }`}
                                     aria-disabled={!nextLink.url}
                                 >
                                     <span className="sr-only">Next</span>

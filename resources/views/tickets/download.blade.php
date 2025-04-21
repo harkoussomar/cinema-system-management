@@ -84,10 +84,39 @@
         .barcode {
             text-align: center;
             margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
         }
-        .barcode img {
-            max-width: 90%;
-            height: auto;
+        .css-barcode {
+            display: inline-block;
+            margin: 1em 0;
+        }
+        .css-barcode-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80px;
+        }
+        .css-barcode-line {
+            width: 2px;
+            height: 80px;
+            background: #000;
+            display: inline-block;
+            margin-right: 1px;
+        }
+        .css-barcode-line.thin {
+            width: 1px;
+        }
+        .css-barcode-line.medium {
+            width: 2px;
+        }
+        .css-barcode-line.thick {
+            width: 3px;
+        }
+        .css-barcode-line.space {
+            width: 1px;
+            background: transparent;
         }
         .print-button {
             display: block;
@@ -194,7 +223,40 @@
             @endif
 
             <div class="barcode">
-                <img src="data:image/png;base64,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" alt="Barcode">
+                <div class="ticket-section-title">Scan for Entry</div>
+                <div class="css-barcode">
+                    <div class="css-barcode-container">
+                        @php
+                            // Simple pattern generation based on confirmation code
+                            $code = $reservation->confirmation_code;
+                            $codeHash = md5($code);
+                            $barPattern = [];
+
+                            // Generate pattern from the hash
+                            for($i = 0; $i < strlen($codeHash); $i++) {
+                                $char = $codeHash[$i];
+                                $value = hexdec($char);
+
+                                if($value < 4) {
+                                    $barPattern[] = 'thin';
+                                } elseif($value < 8) {
+                                    $barPattern[] = 'thin';
+                                    $barPattern[] = 'space';
+                                } elseif($value < 12) {
+                                    $barPattern[] = 'medium';
+                                } else {
+                                    $barPattern[] = 'thick';
+                                    $barPattern[] = 'space';
+                                }
+                            }
+                        @endphp
+
+                        @foreach($barPattern as $type)
+                            <div class="css-barcode-line {{ $type }}"></div>
+                        @endforeach
+                    </div>
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; color: #666;">{{ $reservation->confirmation_code }}</div>
             </div>
         </div>
 

@@ -38,6 +38,21 @@ class User extends Authenticatable
     ];
 
     /**
+     * The attributes that should be visible in serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $visible = [
+        'id',
+        'name',
+        'email',
+        'role',
+        'email_verified_at',
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @var array<string, string>

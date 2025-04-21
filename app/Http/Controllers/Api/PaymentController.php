@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\Seat;
+use App\Notifications\TicketConfirmationNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
+use Inertia\Inertia;
 use Illuminate\Support\Str;
 
 class PaymentController extends Controller
@@ -51,13 +54,10 @@ class PaymentController extends Controller
     }
 
     /**
-     * Handle payment webhook from payment gateway.
+     * Handle payment notification.
      */
-    public function webhook(Request $request)
+    public function store(Request $request)
     {
-        // In a real app, you would verify the webhook signature
-        // and process the payment status update
-
         $validated = $request->validate([
             'transaction_id' => 'required|string',
             'reservation_id' => 'required|exists:reservations,id',
@@ -84,6 +84,9 @@ class PaymentController extends Controller
             // Update seat status to sold
             $seatIds = $reservation->reservationSeats->pluck('seat_id');
             Seat::whereIn('id', $seatIds)->update(['status' => 'sold']);
+
+            // Send ticket confirmation email
+            $this->sendTicketConfirmationEmail($reservation);
         } else {
             // Payment failed, revert reservation
             $reservation->update(['status' => 'cancelled']);
@@ -96,5 +99,23 @@ class PaymentController extends Controller
         return response()->json([
             'success' => true,
         ]);
+    }
+
+    /**
+     * Send ticket confirmation email to the customer.
+     */
+    protected function sendTicketConfirmationEmail(Reservation $reservation)
+    {
+        $reservation->load(['screening.film', 'reservationSeats.seat', 'user']);
+
+        // For guest reservations, send to the guest email
+        if ($reservation->guest_email) {
+            Notification::route('mail', $reservation->guest_email)
+                ->notify(new TicketConfirmationNotification($reservation));
+        }
+        // For logged-in users, use the notification system
+        elseif ($reservation->user) {
+            $reservation->user->notify(new TicketConfirmationNotification($reservation));
+        }
     }
 }

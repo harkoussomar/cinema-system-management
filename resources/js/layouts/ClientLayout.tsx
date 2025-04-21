@@ -47,7 +47,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                             <Link href="/" className="flex items-center flex-shrink-0">
                                 {/* <FilmIcon className="w-8 h-8 text-primary" /> */}
                                 <img className="w-10 h-10" src="/logo.png" alt="" />
-                                <span className="ml-2 text-xl font-bold text-foreground">Cinema</span>
+                                <span className="ml-2 text-xl font-bold text-foreground">CineVerse</span>
                             </Link>
                             <nav className="hidden sm:ml-10 sm:flex sm:space-x-4" aria-label="Main navigation">
                                 {navigationItems.map((item) => (
@@ -59,6 +59,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                         {item.name}
                                     </Link>
                                 ))}
+                                <Link
+                                    href="/find-reservation"
+                                    className="inline-flex items-center px-3 py-2 text-sm font-medium transition-colors rounded-md bg-primary/10 text-primary hover:bg-primary/20"
+                                >
+                                    <TicketIcon className="w-4 h-4 mr-1.5" />
+                                    Find Reservation
+                                </Link>
                             </nav>
                         </div>
 
@@ -185,6 +192,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                 {item.name}
                             </Link>
                         ))}
+                        <Link
+                            href="/find-reservation"
+                            className="flex items-center px-3 py-2 text-base font-medium rounded-md bg-primary/10 text-primary hover:bg-primary/20"
+                        >
+                            <TicketIcon className="w-5 h-5 mr-2" />
+                            Find Reservation
+                        </Link>
                     </div>
 
                     <div className="pt-4 pb-3 border-t border-border">

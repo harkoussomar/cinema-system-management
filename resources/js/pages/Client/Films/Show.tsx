@@ -101,7 +101,7 @@ export default function Show({ film, screenings }: FilmShowProps) {
                 }}
             >
                 {/* Cinematic Hero */}
-                <section className="relative overflow-hidden bg-black py-32">
+                <section className="relative py-32 overflow-hidden bg-black">
                     {/* Background elements */}
                     <div className="absolute inset-0 z-0 opacity-20">
                         <div
@@ -118,7 +118,7 @@ export default function Show({ film, screenings }: FilmShowProps) {
                     </div>
 
                     {/* Film info header */}
-                    <div ref={headerRef} className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div ref={headerRef} className="relative z-10 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <motion.div
                             initial="hidden"
                             animate={headerInView ? 'visible' : 'hidden'}
@@ -135,15 +135,19 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                 {film.poster_image ? (
                                     <div className="relative aspect-[2/3]">
                                         <img
-                                            src={`/storage/${film.poster_image}`}
+                                            src={
+                                                film.poster_image.startsWith('http')
+                                                    ? film.poster_image
+                                                    : `/storage/${film.poster_image}`
+                                            }
                                             alt={film.title}
-                                            className="h-full w-full object-cover object-center"
+                                            className="object-cover object-center w-full h-full"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/50 via-transparent to-transparent" />
                                     </div>
                                 ) : (
                                     <div className="flex aspect-[2/3] items-center justify-center bg-gray-800">
-                                        <svg className="h-16 w-16 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg className="w-16 h-16 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
@@ -162,7 +166,7 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                     animate={headerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                                     transition={{ duration: 0.6, delay: 0.4 }}
                                 >
-                                    <div className="mb-4 inline-flex items-center">
+                                    <div className="inline-flex items-center mb-4">
                                         <span className="bg-primary/70 h-[1px] w-8"></span>
                                         <span className="text-primary/80 mx-3 text-sm font-medium tracking-[0.2em] uppercase">
                                             {film.genre || 'Feature Film'}
@@ -171,22 +175,22 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                     </div>
                                     <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl">{film.title}</h1>
 
-                                    <div className="mt-4 mb-6 flex flex-wrap justify-center gap-4 text-gray-300/80 md:justify-start">
+                                    <div className="flex flex-wrap justify-center gap-4 mt-4 mb-6 text-gray-300/80 md:justify-start">
                                         <div className="flex items-center">
-                                            <ClockIcon className="text-primary mr-2 h-5 w-5" />
+                                            <ClockIcon className="w-5 h-5 mr-2 text-primary" />
                                             <span>{film.duration} minutes</span>
                                         </div>
 
                                         {film.director && (
                                             <div className="flex items-center">
-                                                <UserIcon className="text-primary mr-2 h-5 w-5" />
+                                                <UserIcon className="w-5 h-5 mr-2 text-primary" />
                                                 <span>Director: {film.director}</span>
                                             </div>
                                         )}
 
                                         {film.release_date && (
                                             <div className="flex items-center">
-                                                <CalendarIcon className="text-primary mr-2 h-5 w-5" />
+                                                <CalendarIcon className="w-5 h-5 mr-2 text-primary" />
                                                 <span>Released: {new Date(film.release_date).getFullYear()}</span>
                                             </div>
                                         )}
@@ -197,14 +201,14 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                             <p className="line-clamp-3 md:line-clamp-4">{film.description}</p>
                                         </div>
 
-                                        <div className="mt-8 flex flex-wrap justify-center gap-4 md:justify-start">
+                                        <div className="flex flex-wrap justify-center gap-4 mt-8 md:justify-start">
                                             <motion.button
                                                 whileHover={{ scale: 1.05 }}
                                                 whileTap={{ scale: 0.95 }}
                                                 onClick={() => setTrailerOpen(true)}
-                                                className="bg-primary hover:bg-primary/90 focus:ring-primary/50 inline-flex items-center rounded-md border border-transparent px-6 py-3 text-base font-medium text-white shadow-lg transition-colors duration-200 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                                                className="inline-flex items-center px-6 py-3 text-base font-medium text-white transition-colors duration-200 border border-transparent rounded-md shadow-lg bg-primary hover:bg-primary/90 focus:ring-primary/50 focus:ring-2 focus:ring-offset-2 focus:outline-none"
                                             >
-                                                <svg className="mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <svg className="w-5 h-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                                                     <path
                                                         fillRule="evenodd"
                                                         d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
@@ -216,9 +220,9 @@ export default function Show({ film, screenings }: FilmShowProps) {
 
                                             <a
                                                 href="#screenings"
-                                                className="text-primary bg-primary/10 border-primary/30 hover:bg-primary/20 focus:ring-primary/50 inline-flex items-center rounded-md border px-6 py-3 text-base font-medium shadow-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                                                className="inline-flex items-center px-6 py-3 text-base font-medium transition-colors duration-200 border rounded-md shadow-md text-primary bg-primary/10 border-primary/30 hover:bg-primary/20 focus:ring-primary/50 focus:ring-2 focus:ring-offset-2 focus:outline-none"
                                             >
-                                                <svg className="mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <svg className="w-5 h-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                                                     <path
                                                         fillRule="evenodd"
                                                         d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
@@ -237,32 +241,32 @@ export default function Show({ film, screenings }: FilmShowProps) {
 
                 {/* Main Content */}
                 <div className="py-16">
-                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                         {/* Film details section */}
                         <section ref={detailsRef} className="mb-20">
                             <motion.div initial="hidden" animate={detailsInView ? 'visible' : 'hidden'} variants={fadeIn}>
                                 <h2 className="mb-6 text-2xl font-bold text-white">About the Film</h2>
 
-                                <div className="rounded-xl border border-gray-700 bg-gray-800/50 p-8 shadow-lg">
+                                <div className="p-8 border border-gray-700 shadow-lg rounded-xl bg-gray-800/50">
                                     <div className="prose prose-invert max-w-none">
-                                        <p className="whitespace-pre-line text-gray-300">{film.description}</p>
+                                        <p className="text-gray-300 whitespace-pre-line">{film.description}</p>
                                     </div>
 
                                     {/* Credits and additional details */}
-                                    <div className="mt-8 grid grid-cols-1 gap-6 border-t border-gray-700 pt-6 md:grid-cols-2">
+                                    <div className="grid grid-cols-1 gap-6 pt-6 mt-8 border-t border-gray-700 md:grid-cols-2">
                                         <div>
                                             <h3 className="mb-3 text-lg font-medium text-white">Film Details</h3>
                                             <dl className="space-y-2">
                                                 {film.director && (
                                                     <div className="flex">
-                                                        <dt className="w-32 flex-shrink-0 text-gray-400">Director:</dt>
+                                                        <dt className="flex-shrink-0 w-32 text-gray-400">Director:</dt>
                                                         <dd className="text-gray-300">{film.director}</dd>
                                                     </div>
                                                 )}
 
                                                 {film.genre && (
                                                     <div className="flex">
-                                                        <dt className="w-32 flex-shrink-0 text-gray-400">Genre:</dt>
+                                                        <dt className="flex-shrink-0 w-32 text-gray-400">Genre:</dt>
                                                         <dd>
                                                             <span className="inline-flex items-center rounded-full border border-indigo-800/50 bg-indigo-900/50 px-2.5 py-0.5 text-xs font-medium text-indigo-300">
                                                                 {film.genre}
@@ -273,7 +277,7 @@ export default function Show({ film, screenings }: FilmShowProps) {
 
                                                 {film.release_date && (
                                                     <div className="flex">
-                                                        <dt className="w-32 flex-shrink-0 text-gray-400">Release Date:</dt>
+                                                        <dt className="flex-shrink-0 w-32 text-gray-400">Release Date:</dt>
                                                         <dd className="text-gray-300">
                                                             {new Date(film.release_date).toLocaleDateString('en-US', {
                                                                 year: 'numeric',
@@ -285,7 +289,7 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                                 )}
 
                                                 <div className="flex">
-                                                    <dt className="w-32 flex-shrink-0 text-gray-400">Runtime:</dt>
+                                                    <dt className="flex-shrink-0 w-32 text-gray-400">Runtime:</dt>
                                                     <dd className="text-gray-300">{film.duration} minutes</dd>
                                                 </div>
                                             </dl>
@@ -302,20 +306,20 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                     <h2 className="mb-4 text-3xl font-bold text-white">Available Screenings</h2>
                                     <div className="flex justify-center">
                                         <motion.div
-                                            className="from-primary to-primary/50 h-1 w-24 rounded-full bg-gradient-to-r"
+                                            className="w-24 h-1 rounded-full from-primary to-primary/50 bg-gradient-to-r"
                                             initial={{ width: 0 }}
                                             animate={screeningsInView ? { width: '6rem' } : { width: 0 }}
                                             transition={{ delay: 0.3, duration: 0.8 }}
                                         />
                                     </div>
-                                    <p className="mx-auto mt-4 max-w-2xl text-gray-400">
+                                    <p className="max-w-2xl mx-auto mt-4 text-gray-400">
                                         Select a date and time to book your tickets for {film.title}
                                     </p>
                                 </div>
 
                                 {Object.keys(screenings).length === 0 ? (
-                                    <motion.div variants={scaleIn} className="rounded-lg border border-gray-700 bg-gray-800/50 p-6 text-center">
-                                        <svg className="mx-auto mb-4 h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <motion.div variants={scaleIn} className="p-6 text-center border border-gray-700 rounded-lg bg-gray-800/50">
+                                        <svg className="w-12 h-12 mx-auto mb-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
@@ -329,7 +333,7 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                 ) : (
                                     <>
                                         {/* Date selection with animation */}
-                                        <motion.div variants={staggerContainer} className="mb-8 flex justify-center space-x-2 overflow-x-auto pb-4">
+                                        <motion.div variants={staggerContainer} className="flex justify-center pb-4 mb-8 space-x-2 overflow-x-auto">
                                             {Object.keys(screenings).map((date) => (
                                                 <motion.button
                                                     key={date}
@@ -337,17 +341,16 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                                     variants={scaleIn}
                                                     whileHover={{ scale: 1.05 }}
                                                     whileTap={{ scale: 0.95 }}
-                                                    className={`relative overflow-hidden rounded-full px-6 py-3 text-sm font-medium transition-all duration-200 ${
-                                                        selectedDate === date
-                                                            ? 'bg-primary shadow-primary/20 text-white shadow-lg'
-                                                            : 'border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700'
-                                                    }`}
+                                                    className={`relative overflow-hidden rounded-full px-6 py-3 text-sm font-medium transition-all duration-200 ${selectedDate === date
+                                                        ? 'bg-primary shadow-primary/20 text-white shadow-lg'
+                                                        : 'border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                                        }`}
                                                 >
                                                     {formatDate(date)}
                                                     {selectedDate === date && (
                                                         <motion.span
                                                             layoutId="dateBubble"
-                                                            className="bg-primary/80 absolute right-0 bottom-0 left-0 h-1"
+                                                            className="absolute bottom-0 left-0 right-0 h-1 bg-primary/80"
                                                             transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                                                         />
                                                     )}
@@ -370,17 +373,16 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                                         <motion.div
                                                             key={screening.id}
                                                             whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                                                            className={`relative overflow-hidden rounded-xl border border-gray-700 bg-gradient-to-br from-gray-800 to-gray-900 p-6 shadow-xl ${
-                                                                screening.is_fully_booked ? 'opacity-60' : ''
-                                                            }`}
+                                                            className={`relative overflow-hidden rounded-xl border border-gray-700 bg-gradient-to-br from-gray-800 to-gray-900 p-6 shadow-xl ${screening.is_fully_booked ? 'opacity-60' : ''
+                                                                }`}
                                                         >
-                                                            <div className="from-primary to-primary/50 absolute top-0 right-0 left-0 h-1 bg-gradient-to-r" />
+                                                            <div className="absolute top-0 left-0 right-0 h-1 from-primary to-primary/50 bg-gradient-to-r" />
 
-                                                            <div className="mb-4 flex items-start justify-between">
+                                                            <div className="flex items-start justify-between mb-4">
                                                                 <div>
                                                                     <div className="flex items-center">
                                                                         <svg
-                                                                            className="text-primary mr-2 h-5 w-5"
+                                                                            className="w-5 h-5 mr-2 text-primary"
                                                                             viewBox="0 0 20 20"
                                                                             fill="currentColor"
                                                                         >
@@ -411,7 +413,7 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                                                 {screening.is_fully_booked ? (
                                                                     <button
                                                                         disabled
-                                                                        className="w-full cursor-not-allowed rounded-md bg-gray-700 py-3 text-sm font-medium text-gray-400"
+                                                                        className="w-full py-3 text-sm font-medium text-gray-400 bg-gray-700 rounded-md cursor-not-allowed"
                                                                     >
                                                                         Sold Out
                                                                     </button>
@@ -420,7 +422,7 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                                                         href={route('reservations.seat-selection', {
                                                                             screening: screening.id,
                                                                         })}
-                                                                        className="bg-primary hover:bg-primary/90 shadow-primary/10 block w-full rounded-md py-3 text-center text-sm font-medium text-white shadow-lg transition-colors duration-200"
+                                                                        className="block w-full py-3 text-sm font-medium text-center text-white transition-colors duration-200 rounded-md shadow-lg bg-primary hover:bg-primary/90 shadow-primary/10"
                                                                     >
                                                                         Select Seats
                                                                     </Link>
@@ -442,7 +444,7 @@ export default function Show({ film, screenings }: FilmShowProps) {
                 <AnimatePresence>
                     {trailerOpen && (
                         <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                            <div className="flex min-h-screen items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                            <div className="flex items-end justify-center min-h-screen p-4 text-center sm:items-center sm:p-0">
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
@@ -457,18 +459,18 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
                                     transition={{ duration: 0.3 }}
-                                    className="relative transform overflow-hidden rounded-lg text-left shadow-xl sm:my-8 sm:w-full sm:max-w-5xl"
+                                    className="relative overflow-hidden text-left transform rounded-lg shadow-xl sm:my-8 sm:w-full sm:max-w-5xl"
                                 >
-                                    <div className="bg-gray-900 p-4">
+                                    <div className="p-4 bg-gray-900">
                                         <div className="aspect-w-16 aspect-h-9">
-                                            <div className="flex h-full w-full items-center justify-center bg-gray-800">
+                                            <div className="flex items-center justify-center w-full h-full bg-gray-800">
                                                 <p className="text-center text-gray-400">Trailer not available. This is a demo application.</p>
                                             </div>
                                         </div>
-                                        <div className="mt-4 flex justify-end">
+                                        <div className="flex justify-end mt-4">
                                             <button
                                                 type="button"
-                                                className="rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 focus:outline-none"
+                                                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-700 rounded-md hover:bg-gray-700 focus:outline-none"
                                                 onClick={() => setTrailerOpen(false)}
                                             >
                                                 Close

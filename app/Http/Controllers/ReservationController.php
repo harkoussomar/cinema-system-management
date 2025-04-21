@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Notifications\TicketConfirmationNotification;
+use Illuminate\Support\Facades\Notification;
 
 class ReservationController extends Controller
 {
@@ -134,9 +137,28 @@ class ReservationController extends Controller
         $seatIds = $reservation->reservationSeats->pluck('seat_id');
         Seat::whereIn('id', $seatIds)->update(['status' => 'sold']);
 
-        // In a real app, you would send email confirmation here
+        // Send ticket confirmation email
+        $this->sendTicketConfirmationEmail($reservation);
 
         return redirect()->route('reservations.confirmation', $reservation);
+    }
+
+    /**
+     * Send ticket confirmation email to the customer.
+     */
+    protected function sendTicketConfirmationEmail(Reservation $reservation)
+    {
+        $reservation->load(['screening.film', 'reservationSeats.seat', 'user']);
+
+        // For guest reservations, send to the guest email
+        if ($reservation->guest_email) {
+            Notification::route('mail', $reservation->guest_email)
+                ->notify(new TicketConfirmationNotification($reservation));
+        }
+        // For logged-in users, use the notification system
+        elseif ($reservation->user) {
+            $reservation->user->notify(new TicketConfirmationNotification($reservation));
+        }
     }
 
     /**
@@ -157,9 +179,6 @@ class ReservationController extends Controller
         // Calculate the total price explicitly
         $totalPrice = $reservation->reservationSeats->sum('price');
         $reservation->total_price = $totalPrice ?: ($seats->count() * $reservation->screening->price);
-
-        // Add confirmation code
-        $reservation->confirmation_code = $reservation->reservation_code ?? 'CONF-' . strtoupper(substr(md5($reservation->id), 0, 8));
 
         // Set payment status
         $reservation->payment_status = $reservation->payment ? $reservation->payment->status : 'pending';
@@ -203,12 +222,66 @@ class ReservationController extends Controller
     }
 
     /**
+     * Display the reservation search form.
+     */
+    public function searchForm()
+    {
+        return Inertia::render('Client/Reservations/Search');
+    }
+
+    /**
+     * Search for a reservation by confirmation code.
+     */
+    public function search(Request $request)
+    {
+        $request->validate([
+            'confirmation_code' => 'required|string|min:5',
+        ]);
+
+        $code = $request->input('confirmation_code');
+
+        // Try to find by confirmation_code (preferred) or reservation_code
+        $reservation = Reservation::where('confirmation_code', $code)
+            ->orWhere('reservation_code', $code)
+            ->with(['screening.film', 'reservationSeats.seat', 'payment'])
+            ->first();
+
+        if (!$reservation) {
+            return back()->withErrors([
+                'confirmation_code' => 'No reservation found with this confirmation code.',
+            ]);
+        }
+
+        // Store the reservation ID in the session to grant permission for ticket download
+        session()->put('found_reservation_' . $reservation->id, true);
+
+        // Calculate the total price explicitly
+        $totalPrice = $reservation->reservationSeats->sum('price');
+        $reservation->total_price = $totalPrice ?: ($reservation->reservationSeats->count() * $reservation->screening->price);
+
+        // Map reservation seats to seats property
+        $reservation->seats = $reservation->reservationSeats->map(function ($reservationSeat) {
+            return $reservationSeat->seat;
+        });
+
+        // Set payment status
+        $reservation->payment_status = $reservation->payment ? $reservation->payment->status : 'pending';
+
+        return Inertia::render('Client/Reservations/SearchResult', [
+            'reservation' => $reservation,
+        ]);
+    }
+
+    /**
      * Download a PDF ticket for a reservation.
      */
     public function downloadTicket(Reservation $reservation)
     {
-        // Make sure the user can only download their own reservations or guest reservations they created
-        if (Auth::check() && Auth::id() !== $reservation->user_id && !session()->has('guest_reservation_' . $reservation->id)) {
+        // Make sure the user can only download their own reservations, guest reservations they created,
+        // or reservations they found via search
+        if (Auth::check() && Auth::id() !== $reservation->user_id &&
+            !session()->has('guest_reservation_' . $reservation->id) &&
+            !session()->has('found_reservation_' . $reservation->id)) {
             abort(403);
         }
 
@@ -227,13 +300,12 @@ class ReservationController extends Controller
             return $seat->row . $seat->number;
         })->implode(', ');
 
-        // Add confirmation code if not present
-        $reservation->confirmation_code = $reservation->reservation_code ?? 'CONF-' . strtoupper(substr(md5($reservation->id), 0, 8));
-
-        // For now, we'll render a blade view as a simplified ticket rather than generating a PDF
-        return view('tickets.download', [
+        // Generate PDF
+        $pdf = Pdf::loadView('tickets.download', [
             'reservation' => $reservation,
             'seatsList' => $seatsList,
         ]);
+
+        return $pdf->download('ticket-' . $reservation->confirmation_code . '.pdf');
     }
 }

@@ -68,6 +68,10 @@ Route::middleware(['web', \App\Http\Middleware\EnsureUserIsClient::class])->grou
     Route::get('/films', [FilmController::class, 'index'])->name('films.index');
     Route::get('/films/{film}', [FilmController::class, 'show'])->name('films.show');
 
+    // Reservation Search Route
+    Route::get('/find-reservation', [ReservationController::class, 'searchForm'])->name('reservations.search');
+    Route::post('/find-reservation', [ReservationController::class, 'search'])->name('reservations.search.post');
+
     // Reservation Routes
     Route::get('/screenings/{screening}/seats', [ReservationController::class, 'seatSelection'])
         ->name('reservations.seat-selection');
@@ -161,3 +165,19 @@ Route::get('/debug/auth', function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Add a test route at the very end of the file
+Route::get('/test-mail/{email}/{reservation_id?}', function($email, $reservation_id = null) {
+    if ($reservation_id) {
+        $reservation = App\Models\Reservation::findOrFail($reservation_id);
+        \Illuminate\Support\Facades\Notification::route('mail', $email)
+            ->notify(new App\Notifications\TicketConfirmationNotification($reservation));
+        return "Ticket email sent to {$email} for reservation #{$reservation_id}";
+    } else {
+        \Illuminate\Support\Facades\Mail::raw('This is a test email from your CineVerse application.', function ($message) use ($email) {
+            $message->to($email)
+                ->subject('CineVerse Test Email');
+        });
+        return "Test email sent to {$email}";
+    }
+});

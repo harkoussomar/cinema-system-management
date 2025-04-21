@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Models\User;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -43,6 +45,21 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         $isAdminPath = $request->is('admin*');
 
+        // Debug log for auth issues
+        if ($isAdminPath) {
+            Log::debug('Admin auth debug', [
+                'path' => $request->path(),
+                'auth_check' => Auth::check(),
+                'session_id' => $request->session()->getId(),
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role
+                ] : null,
+            ]);
+        }
+
         // Check if we need to force logout due to role mismatch
         if ($user && (($isAdminPath && $user->role !== 'admin') || (!$isAdminPath && $user->role === 'admin'))) {
             // This will be caught by the middleware, but we handle it here just in case
@@ -50,6 +67,36 @@ class HandleInertiaRequests extends Middleware
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             $user = null;
+        }
+
+        // Make sure the user data is fully loaded
+        if ($user) {
+            // Make all fields visible since we're in a trusted environment
+            $user->makeVisible(['id', 'name', 'email', 'role', 'created_at', 'updated_at']);
+
+            // Force refresh the user data from DB
+            if ($isAdminPath) {
+                try {
+                    // Try to get fresh user data - extra verification for admin routes
+                    $freshUser = User::find($user->id);
+                    if ($freshUser) {
+                        $freshUser->makeVisible(['id', 'name', 'email', 'role', 'created_at', 'updated_at']);
+                        $user = $freshUser;
+
+                        // Debug log for fresh user data
+                        Log::debug('Fresh user data loaded', [
+                            'user_id' => $user->id,
+                            'name' => $user->name,
+                            'path' => $request->path()
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error refreshing user', [
+                        'error' => $e->getMessage(),
+                        'user_id' => $user->id
+                    ]);
+                }
+            }
         }
 
         return [

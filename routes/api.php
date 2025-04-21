@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\SeatController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +15,63 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+// Debug endpoint for checking auth status - with robust error handling
+Route::get('/auth-check', function (Request $request) {
+    try {
+        // Start with defaults, in case of errors
+        $responseData = [
+            'authenticated' => false,
+            'user' => null,
+            'session_active' => false,
+            'session_id' => null,
+        ];
+
+        // Get session info safely
+        if ($request->hasSession()) {
+            $responseData['session_active'] = $request->session()->isStarted();
+            $responseData['session_id'] = $request->session()->getId();
+        }
+
+        // Get auth info safely
+        try {
+            $responseData['authenticated'] = Auth::check();
+            $user = Auth::user();
+
+            if ($user) {
+                // Make sure all relevant fields are visible
+                $user->makeVisible(['id', 'name', 'email', 'role', 'created_at', 'updated_at']);
+                $responseData['user'] = $user;
+            }
+        } catch (\Exception $authError) {
+            Log::error('Auth error in auth-check', [
+                'error' => $authError->getMessage(),
+                'trace' => $authError->getTraceAsString()
+            ]);
+        }
+
+        // Log the successful response
+        Log::debug('Auth check response', [
+            'user_id' => $user->id ?? null,
+            'authenticated' => $responseData['authenticated'],
+            'session_id' => $responseData['session_id']
+        ]);
+
+        return response()->json($responseData);
+    } catch (\Exception $e) {
+        Log::error('Auth check failed completely', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'error' => 'Authentication check failed',
+            'message' => $e->getMessage(),
+            'authenticated' => false,
+            'user' => null
+        ], 200); // Return 200 even on error to avoid axios errors
+    }
 });
 
 // Seat Management

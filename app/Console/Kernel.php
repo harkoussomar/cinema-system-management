@@ -3,9 +3,11 @@
 namespace App\Console;
 
 use App\Console\Commands\RepairScreeningSeats;
+use App\Console\Commands\RepairReservationSeats;
 use App\Console\Commands\ListTables;
 use App\Console\Commands\OptimizeSqliteDatabase;
 use App\Console\Commands\CreateAdminUser;
+use App\Console\Commands\UpdateReservationConfirmationCodes;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -18,9 +20,11 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         RepairScreeningSeats::class,
+        RepairReservationSeats::class,
         ListTables::class,
         OptimizeSqliteDatabase::class,
         CreateAdminUser::class,
+        UpdateReservationConfirmationCodes::class,
     ];
 
     /**

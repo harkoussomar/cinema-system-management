@@ -21,6 +21,7 @@ class Reservation extends Model
         'guest_phone',
         'status',
         'reservation_code',
+        'confirmation_code',
     ];
 
     /**
@@ -30,6 +31,7 @@ class Reservation extends Model
     {
         static::creating(function ($reservation) {
             $reservation->reservation_code = Str::random(10);
+            $reservation->confirmation_code = 'CONF-' . strtoupper(Str::random(8));
         });
     }
 

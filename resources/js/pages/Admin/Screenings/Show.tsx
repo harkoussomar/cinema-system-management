@@ -98,6 +98,18 @@ export default function Show({ screening }: Props) {
         });
     };
 
+    // Safe currency formatter that handles invalid values
+    const formatCurrency = (amount: number | null | undefined) => {
+        // Make sure we have a valid number
+        if (amount === null || amount === undefined || isNaN(amount)) {
+            return '$0.00';
+        }
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        }).format(amount);
+    };
+
     const handleRepairSeats = () => {
         router.post(route('admin.screenings.repair-seats', { screening: screening.id }));
     };
@@ -195,7 +207,7 @@ export default function Show({ screening }: Props) {
                             <CurrencyDollarIcon className="text-muted-foreground mt-0.5 mr-3 h-5 w-5 flex-shrink-0" />
                             <div>
                                 <h3 className="text-muted-foreground text-sm font-medium">Price</h3>
-                                <p className="text-foreground font-medium">${Number(screening.price).toFixed(2)}</p>
+                                <p className="text-foreground font-medium">{formatCurrency(screening.price)}</p>
                             </div>
                         </div>
                     </div>
@@ -205,9 +217,8 @@ export default function Show({ screening }: Props) {
                             <div className="mb-2 flex items-center justify-between">
                                 <h3 className="text-muted-foreground text-sm font-medium">Status</h3>
                                 <span
-                                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                        screening.is_active ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'
-                                    }`}
+                                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${screening.is_active ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'
+                                        }`}
                                 >
                                     {screening.is_active ? 'Active' : 'Inactive'}
                                 </span>
@@ -277,13 +288,12 @@ export default function Show({ screening }: Props) {
                                         {seatsByRow[row].map((seat) => (
                                             <div
                                                 key={seat.id}
-                                                className={`flex h-8 w-8 items-center justify-center rounded-sm text-xs font-medium ${
-                                                    seat.status === 'available'
+                                                className={`flex h-8 w-8 items-center justify-center rounded-sm text-xs font-medium ${seat.status === 'available'
                                                         ? 'bg-success/20 text-success'
                                                         : seat.status === 'reserved'
-                                                          ? 'bg-warning/20 text-warning'
-                                                          : 'bg-destructive/20 text-destructive'
-                                                }`}
+                                                            ? 'bg-warning/20 text-warning'
+                                                            : 'bg-destructive/20 text-destructive'
+                                                    }`}
                                                 title={`Row ${seat.row}, Seat ${seat.number} - ${seat.status}`}
                                             >
                                                 {seat.number}
@@ -365,19 +375,18 @@ export default function Show({ screening }: Props) {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span
-                                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                                    reservation.status === 'confirmed'
+                                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${reservation.status === 'confirmed'
                                                         ? 'bg-success/20 text-success'
                                                         : reservation.status === 'pending'
-                                                          ? 'bg-warning/20 text-warning'
-                                                          : 'bg-destructive/20 text-destructive'
-                                                }`}
+                                                            ? 'bg-warning/20 text-warning'
+                                                            : 'bg-destructive/20 text-destructive'
+                                                    }`}
                                             >
                                                 {reservation.status}
                                             </span>
                                         </td>
                                         <td className="text-foreground px-6 py-4 text-sm whitespace-nowrap">
-                                            ${Number(reservation.total_price).toFixed(2)}
+                                            {formatCurrency(reservation.total_price)}
                                         </td>
                                         <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                                             {new Date(reservation.created_at).toLocaleString()}

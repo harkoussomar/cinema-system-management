@@ -42,7 +42,7 @@ interface Reservation {
         };
     };
     reservationSeats: ReservationSeat[];
-    total_price: number;
+    total_price: number | string;
     user_id?: number;
     guest_name?: string;
     guest_email?: string;
@@ -153,9 +153,15 @@ export default function Payment({ reservation }: PaymentProps) {
                                         <div className="relative w-16 h-24 mr-4 overflow-hidden border rounded-md shadow-lg border-neutral-700">
                                             {reservation.screening.film.poster_image ? (
                                                 <img
-                                                    src={`/storage/${reservation.screening.film.poster_image}`}
+                                                    src={reservation.screening.film.poster_image.startsWith('http')
+                                                        ? reservation.screening.film.poster_image
+                                                        : `/storage/${reservation.screening.film.poster_image}`}
                                                     alt={reservation.screening.film.title}
                                                     className="object-cover object-center w-full h-full"
+                                                    onError={(e) => {
+                                                        // Fallback to a placeholder if the image fails to load
+                                                        e.currentTarget.src = 'https://via.placeholder.com/300x450?text=No+Poster';
+                                                    }}
                                                 />
                                             ) : (
                                                 <div className="flex items-center justify-center w-full h-full bg-neutral-900">
@@ -215,7 +221,11 @@ export default function Payment({ reservation }: PaymentProps) {
                                     </div>
                                     <div className="flex justify-between pt-3 text-lg font-bold border-t border-neutral-700">
                                         <span className="text-white">Total</span>
-                                        <span className="text-red-500">${Number(reservation.total_price || 0).toFixed(2)}</span>
+                                        <span className="text-red-500">
+                                            ${typeof reservation.total_price === 'number'
+                                                ? reservation.total_price.toFixed(2)
+                                                : Number(reservation.total_price || 0).toFixed(2)}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -249,17 +259,15 @@ export default function Payment({ reservation }: PaymentProps) {
                                     {/* Payment method selection */}
                                     <div className="grid grid-cols-2 gap-4 mb-6">
                                         <div
-                                            className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border border-neutral-600 p-4 transition-colors ${
-                                                paymentMethod === 'credit_card'
+                                            className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border border-neutral-600 p-4 transition-colors ${paymentMethod === 'credit_card'
                                                     ? 'border-red-500 bg-red-500/10'
                                                     : 'hover:border-white/50 hover:bg-neutral-700/30'
-                                            }`}
+                                                }`}
                                             onClick={() => setPaymentMethod('credit_card')}
                                         >
                                             <div
-                                                className={`mb-2 flex h-10 w-10 items-center justify-center rounded-full ${
-                                                    paymentMethod === 'credit_card' ? 'bg-red-500' : 'bg-neutral-700'
-                                                }`}
+                                                className={`mb-2 flex h-10 w-10 items-center justify-center rounded-full ${paymentMethod === 'credit_card' ? 'bg-red-500' : 'bg-neutral-700'
+                                                    }`}
                                             >
                                                 <CreditCardIcon className="w-5 h-5 text-white" />
                                             </div>
@@ -267,17 +275,15 @@ export default function Payment({ reservation }: PaymentProps) {
                                         </div>
 
                                         <div
-                                            className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border border-neutral-600 p-4 transition-colors ${
-                                                paymentMethod === 'paypal'
+                                            className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border border-neutral-600 p-4 transition-colors ${paymentMethod === 'paypal'
                                                     ? 'border-red-500 bg-red-500/10'
                                                     : 'hover:border-white/50 hover:bg-neutral-700/30'
-                                            }`}
+                                                }`}
                                             onClick={() => setPaymentMethod('paypal')}
                                         >
                                             <div
-                                                className={`mb-2 flex h-10 w-10 items-center justify-center rounded-full ${
-                                                    paymentMethod === 'paypal' ? 'bg-red-500' : 'bg-neutral-700'
-                                                }`}
+                                                className={`mb-2 flex h-10 w-10 items-center justify-center rounded-full ${paymentMethod === 'paypal' ? 'bg-red-500' : 'bg-neutral-700'
+                                                    }`}
                                             >
                                                 <BanknoteIcon className="w-5 h-5 text-white" />
                                             </div>

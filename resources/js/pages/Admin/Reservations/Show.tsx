@@ -42,12 +42,16 @@ interface Reservation {
         room: string;
         price: number;
     };
-    user: User;
+    user: User | null;
     payment: Payment | null;
     status: string;
+    confirmation_code: string;
     reservationSeats: ReservationSeat[];
     total_price: number;
     created_at: string;
+    guest_name?: string;
+    guest_email?: string;
+    guest_phone?: string;
 }
 
 interface Props {
@@ -77,11 +81,45 @@ export default function Show({ reservation }: Props) {
         });
     };
 
-    const formatCurrency = (amount: number) => {
+    const formatCurrency = (amount: number | null | undefined) => {
+        // Make sure we have a valid number
+        if (amount === null || amount === undefined || isNaN(amount)) {
+            return '$0.00';
+        }
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
         }).format(amount);
+    };
+
+    // Calculate a safe total price value that's always a valid number
+    const calculateTotalPrice = (): number => {
+        // First try the total_price property if it's a valid number
+        if (typeof reservation.total_price === 'number' && !isNaN(reservation.total_price) && reservation.total_price > 0) {
+            return reservation.total_price;
+        }
+
+        // Next try to calculate from reservation seats
+        if (reservation.reservationSeats && reservation.reservationSeats.length > 0) {
+            const seatCount = reservation.reservationSeats.length;
+
+            // Make sure screening price is a valid number
+            const screeningPrice = typeof reservation.screening.price === 'number'
+                ? reservation.screening.price
+                : parseFloat(String(reservation.screening.price));
+
+            if (!isNaN(screeningPrice) && screeningPrice > 0) {
+                return seatCount * screeningPrice;
+            }
+        }
+
+        // If payment exists, use its amount
+        if (reservation.payment && typeof reservation.payment.amount === 'number' && !isNaN(reservation.payment.amount) && reservation.payment.amount > 0) {
+            return reservation.payment.amount;
+        }
+
+        // Fallback to zero if no valid price could be determined
+        return 0;
     };
 
     const handleDelete = () => {
@@ -194,8 +232,63 @@ export default function Show({ reservation }: Props) {
                                 <UserIcon className="text-primary mt-1 mr-3 h-5 w-5" />
                                 <div>
                                     <div className="text-muted-foreground mb-1 text-xs font-medium uppercase">Customer</div>
-                                    <div className="text-foreground mb-1 text-base font-semibold">{reservation.user.name}</div>
-                                    <div className="text-muted-foreground text-sm">{reservation.user.email}</div>
+                                    {reservation.user ? (
+                                        <>
+                                            <div className="text-foreground mb-1 text-base font-semibold">{reservation.user.name}</div>
+                                            <div className="text-muted-foreground text-sm">{reservation.user.email}</div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="text-foreground mb-1 text-base font-semibold">
+                                                {reservation.guest_name || "Guest Customer"}
+                                            </div>
+                                            <div className="text-muted-foreground text-sm">
+                                                {reservation.guest_email || "No email provided"}
+                                            </div>
+                                            {reservation.guest_phone && (
+                                                <div className="text-muted-foreground text-sm">
+                                                    Phone: {reservation.guest_phone}
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Confirmation Code */}
+                        <div className="px-6 py-4">
+                            <div className="flex items-start">
+                                <svg className="text-primary mt-1 mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <div className="flex-grow">
+                                    <div className="text-muted-foreground mb-1 text-xs font-medium uppercase">Confirmation Code</div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-foreground mb-1 text-base font-mono font-semibold">
+                                            {reservation.confirmation_code || "Not generated"}
+                                        </div>
+                                        {reservation.confirmation_code && (
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(reservation.confirmation_code);
+                                                    // Show a copy feedback
+                                                    const button = document.activeElement as HTMLButtonElement;
+                                                    const originalText = button.textContent;
+                                                    button.textContent = "Copied!";
+                                                    setTimeout(() => {
+                                                        button.textContent = originalText;
+                                                    }, 2000);
+                                                }}
+                                                className="text-primary hover:text-primary/80 ml-2 text-xs font-medium"
+                                            >
+                                                Copy
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="text-muted-foreground text-sm">
+                                        The customer can use this code to look up their reservation
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -219,10 +312,10 @@ export default function Show({ reservation }: Props) {
                                 </svg>
                                 <div>
                                     <div className="text-muted-foreground mb-1 text-xs font-medium uppercase">
-                                        Seats ({reservation.reservationSeats.length})
+                                        Seats ({reservation.reservationSeats?.length || 0})
                                     </div>
                                     <div className="mt-2 flex flex-wrap gap-2">
-                                        {reservation.reservationSeats.map((reservationSeat) => (
+                                        {reservation.reservationSeats?.map((reservationSeat) => (
                                             <span
                                                 key={reservationSeat.id}
                                                 className="border-border bg-background inline-flex items-center rounded-md border px-2.5 py-1 text-sm font-medium"
@@ -230,6 +323,20 @@ export default function Show({ reservation }: Props) {
                                                 {reservationSeat.seat.row}-{reservationSeat.seat.number}
                                             </span>
                                         ))}
+                                        {(!reservation.reservationSeats || reservation.reservationSeats.length === 0) && (
+                                            <div>
+                                                <span className="text-muted-foreground text-sm">No seat records found</span>
+                                                {reservation.total_price > 0 && (
+                                                    <div className="mt-2 text-sm">
+                                                        <span className="text-warning">Note: </span>
+                                                        <span className="text-muted-foreground">
+                                                            This reservation has a total price of {formatCurrency(reservation.total_price)},
+                                                            suggesting that it had seats that may have been lost due to a data issue.
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -281,24 +388,18 @@ export default function Show({ reservation }: Props) {
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Ticket price:</span>
                                 <span className="text-foreground">
-                                    {formatCurrency(
-                                        typeof reservation.screening.price === 'number'
-                                            ? reservation.screening.price
-                                            : Number(reservation.screening.price),
-                                    )}
+                                    {formatCurrency(reservation.screening.price)}
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Number of seats:</span>
-                                <span className="text-foreground">{reservation.reservationSeats.length}</span>
+                                <span className="text-foreground">{reservation.reservationSeats?.length || 0}</span>
                             </div>
                             <div className="border-border mt-4 border-t pt-4">
                                 <div className="flex justify-between font-medium">
                                     <span className="text-foreground">Total:</span>
                                     <span className="text-foreground text-lg">
-                                        {formatCurrency(
-                                            typeof reservation.total_price === 'number' ? reservation.total_price : Number(reservation.total_price),
-                                        )}
+                                        {formatCurrency(calculateTotalPrice())}
                                     </span>
                                 </div>
                             </div>
