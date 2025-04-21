@@ -53,10 +53,37 @@ export default function Index({ screenings, films, filters }: Props) {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [screeningToDelete, setScreeningToDelete] = useState<number | null>(null);
 
+    // Use React's useEffect to trigger filtering when form data changes
+    React.useEffect(() => {
+        // Don't run on initial mount
+        if (JSON.stringify(filters) !== JSON.stringify({ film_id: data.film_id, date: data.date })) {
+            const timeoutId = setTimeout(() => {
+                get(route('admin.screenings.index'), {
+                    preserveState: true,
+                    replace: true,
+                });
+            }, 300);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [data.film_id, data.date]);
+
+    // Handle film filter change
+    const handleFilmChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setData('film_id', e.target.value);
+    };
+
+    // Handle date filter change
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setData('date', e.target.value);
+    };
+
+    // Keep the form submission handler for compatibility
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         get(route('admin.screenings.index'), {
             preserveState: true,
+            replace: true,
         });
     };
 
@@ -101,6 +128,7 @@ export default function Index({ screenings, films, filters }: Props) {
         });
         get(route('admin.screenings.index'), {
             preserveState: true,
+            replace: true,
         });
     };
 
@@ -125,19 +153,17 @@ export default function Index({ screenings, films, filters }: Props) {
             </div>
 
             {/* Search and filters */}
-            <div className="mb-6 border rounded-lg shadow-sm border-border bg-card">
-                <div className="p-4">
+            <div className="mb-4 bg-card">
+                <div className="">
                     <form onSubmit={handleSearch} className="space-y-4">
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div>
-                                <label htmlFor="film_id" className="text-foreground mb-1.5 block text-sm font-medium">
-                                    Filter by Film
-                                </label>
                                 <select
                                     id="film_id"
                                     value={data.film_id}
-                                    onChange={(e) => setData('film_id', e.target.value)}
+                                    onChange={handleFilmChange}
                                     className="w-full px-3 py-2 border rounded-md focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground"
+                                    placeholder="All Films"
                                 >
                                     <option value="">All Films</option>
                                     {films.map((film) => (
@@ -149,27 +175,16 @@ export default function Index({ screenings, films, filters }: Props) {
                             </div>
 
                             <div>
-                                <label htmlFor="date" className="text-foreground mb-1.5 block text-sm font-medium">
-                                    Filter by Date
-                                </label>
                                 <input
                                     id="date"
                                     type="date"
                                     value={data.date}
-                                    onChange={(e) => setData('date', e.target.value)}
+                                    onChange={handleDateChange}
                                     className="w-full px-3 py-2 border rounded-md focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground"
                                 />
                             </div>
 
-                            <div className="flex items-end space-x-3">
-                                <button
-                                    type="submit"
-                                    className="flex items-center px-4 py-2 text-sm font-medium text-white transition rounded-md bg-primary hover:bg-primary/90 focus:ring-primary/30 focus:ring-2 focus:outline-none disabled:opacity-70"
-                                    disabled={processing}
-                                >
-                                    <MagnifyingGlassIcon className="mr-1.5 h-4 w-4" />
-                                    Filter
-                                </button>
+                            <div className="flex items-center justify-end space-x-3">
                                 {(data.film_id || data.date) && (
                                     <button
                                         type="button"
@@ -261,9 +276,8 @@ export default function Index({ screenings, films, filters }: Props) {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span
-                                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                                    screening.is_active ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'
-                                                }`}
+                                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${screening.is_active ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'
+                                                    }`}
                                             >
                                                 {screening.is_active ? 'Active' : 'Inactive'}
                                             </span>
@@ -343,9 +357,8 @@ export default function Index({ screenings, films, filters }: Props) {
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${
-                                            !link.url ? 'pointer-events-none opacity-50' : ''
-                                        }`}
+                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${!link.url ? 'pointer-events-none opacity-50' : ''
+                                            }`}
                                     >
                                         Previous
                                     </Link>
@@ -355,9 +368,8 @@ export default function Index({ screenings, films, filters }: Props) {
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${
-                                            !link.url ? 'pointer-events-none opacity-50' : ''
-                                        }`}
+                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${!link.url ? 'pointer-events-none opacity-50' : ''
+                                            }`}
                                     >
                                         Next
                                     </Link>
@@ -367,9 +379,8 @@ export default function Index({ screenings, films, filters }: Props) {
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border flex h-8 w-8 items-center justify-center rounded-md border text-sm ${
-                                            link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-foreground'
-                                        } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
+                                        className={`border-border flex h-8 w-8 items-center justify-center rounded-md border text-sm ${link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-foreground'
+                                            } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
                                     >
                                         {link.label}
                                     </Link>

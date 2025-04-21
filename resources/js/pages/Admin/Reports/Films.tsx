@@ -108,8 +108,8 @@ export default function Films({ films, period, filters }: Props) {
             </div>
 
             {/* Period filter */}
-            <div className="mb-6 border rounded-lg shadow-sm border-border bg-card">
-                <div className="p-4">
+            <div className="mb-6 bg-card">
+                <div>
                     <div className="flex items-center justify-between">
                         <div>
                             <div className="flex space-x-2">
@@ -151,9 +151,9 @@ export default function Films({ films, period, filters }: Props) {
                             </div>
                         </div>
                         <div>
-                            <div className="flex items-center w-full max-w-sm">
+                            <div className="flex items-center justify-center max-w-sm">
                                 <div className="relative flex-1">
-                                    <MagnifyingGlassIcon className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
+                                    <MagnifyingGlassIcon className="text-muted-foreground absolute top-2.5 left-2.5 h-5 w-5" />
                                     <input
                                         type="text"
                                         placeholder="Search films..."

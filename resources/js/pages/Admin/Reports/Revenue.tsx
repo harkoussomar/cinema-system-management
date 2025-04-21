@@ -196,43 +196,43 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
             <Head title="Revenue Report" />
 
             {/* Report Navigation */}
-            <div className="border-border bg-card mb-6 rounded-lg border shadow-sm">
+            <div className="mb-6 border rounded-lg shadow-sm border-border bg-card">
                 <div className="flex overflow-x-auto">
                     <Link
                         href={route('admin.reports.films')}
-                        className="text-muted-foreground hover:text-foreground flex items-center border-b-2 border-transparent px-6 py-3 text-sm font-medium"
+                        className="flex items-center px-6 py-3 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground"
                     >
-                        <FilmIcon className="mr-2 h-5 w-5" />
+                        <FilmIcon className="w-5 h-5 mr-2" />
                         Film Popularity
                     </Link>
                     <Link
                         href={route('admin.reports.revenue')}
-                        className="border-primary text-primary flex items-center border-b-2 px-6 py-3 text-sm font-medium"
+                        className="flex items-center px-6 py-3 text-sm font-medium border-b-2 border-primary text-primary"
                     >
-                        <CreditCardIcon className="mr-2 h-5 w-5" />
+                        <CreditCardIcon className="w-5 h-5 mr-2" />
                         Revenue
                     </Link>
                     <Link
                         href={route('admin.reports.screenings')}
-                        className="text-muted-foreground hover:text-foreground flex items-center border-b-2 border-transparent px-6 py-3 text-sm font-medium"
+                        className="flex items-center px-6 py-3 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground"
                     >
-                        <CalendarIcon className="mr-2 h-5 w-5" />
+                        <CalendarIcon className="w-5 h-5 mr-2" />
                         Screening Occupancy
                     </Link>
                 </div>
             </div>
 
             {/* Header with actions */}
-            <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
-                    <CreditCardIcon className="text-primary mr-2 h-6 w-6" />
-                    <h2 className="text-foreground text-lg font-semibold">Revenue</h2>
+                    <CreditCardIcon className="w-6 h-6 mr-2 text-primary" />
+                    <h2 className="text-lg font-semibold text-foreground">Revenue</h2>
                 </div>
             </div>
 
             {/* Period & Film Filter */}
-            <div className="border-border bg-card mb-6 rounded-lg border shadow-sm">
-                <div className="p-4">
+            <div className="mb-6 bg-card">
+                <div>
                     <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
                         <div>
                             <div className="flex flex-wrap gap-2">
@@ -278,7 +278,7 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                                 id="film_id"
                                 value={data.film_id}
                                 onChange={handleFilmChange}
-                                className="focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2"
+                                className="w-full px-3 py-2 border rounded-md focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground"
                             >
                                 <option value="">All Films</option>
                                 {films.map((film) => (
@@ -293,27 +293,27 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
             </div>
 
             {/* Key Figures */}
-            <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-                <div className="border-border bg-card overflow-hidden rounded-lg border p-6 shadow-sm">
+            <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-3">
+                <div className="p-6 overflow-hidden border rounded-lg shadow-sm border-border bg-card">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-muted-foreground mb-1 text-sm font-medium">Total Revenue</p>
-                            <h4 className="text-foreground text-2xl font-bold">{formatCurrency(totalRevenue)}</h4>
+                            <p className="mb-1 text-sm font-medium text-muted-foreground">Total Revenue</p>
+                            <h4 className="text-2xl font-bold text-foreground">{formatCurrency(totalRevenue)}</h4>
                         </div>
-                        <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full">
-                            <CreditCardIcon className="h-6 w-6" />
+                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
+                            <CreditCardIcon className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
 
-                <div className="border-border bg-card overflow-hidden rounded-lg border p-6 shadow-sm">
+                <div className="p-6 overflow-hidden border rounded-lg shadow-sm border-border bg-card">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-muted-foreground mb-1 text-sm font-medium">Total Transactions</p>
-                            <h4 className="text-foreground text-2xl font-bold">{transactionCount}</h4>
+                            <p className="mb-1 text-sm font-medium text-muted-foreground">Total Transactions</p>
+                            <h4 className="text-2xl font-bold text-foreground">{transactionCount}</h4>
                         </div>
-                        <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -325,25 +325,25 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                     </div>
                 </div>
 
-                <div className="border-border bg-card overflow-hidden rounded-lg border p-6 shadow-sm">
+                <div className="p-6 overflow-hidden border rounded-lg shadow-sm border-border bg-card">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-muted-foreground mb-1 text-sm font-medium">Avg. Transaction</p>
-                            <h4 className="text-foreground text-2xl font-bold">
+                            <p className="mb-1 text-sm font-medium text-muted-foreground">Avg. Transaction</p>
+                            <h4 className="text-2xl font-bold text-foreground">
                                 {formatCurrency(avgTransaction)}
                             </h4>
                         </div>
-                        <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full">
-                            <ChartBarIcon className="h-6 w-6" />
+                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
+                            <ChartBarIcon className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Revenue Chart */}
-            <div className="border-border bg-card mb-6 h-80 overflow-hidden rounded-lg border shadow-sm">
-                <div className="border-border bg-muted border-b px-6 py-4">
-                    <h3 className="text-foreground text-lg font-medium">Daily Revenue</h3>
+            <div className="mb-6 overflow-hidden border rounded-lg shadow-sm border-border bg-card h-80">
+                <div className="px-6 py-4 border-b border-border bg-muted">
+                    <h3 className="text-lg font-medium text-foreground">Daily Revenue</h3>
                 </div>
                 <div className="h-[calc(100%-4rem)] p-6">
                     <canvas ref={chartRef}></canvas>
@@ -351,63 +351,63 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
             </div>
 
             {/* Revenue by Film */}
-            <div className="border-border bg-card overflow-hidden rounded-lg border shadow-sm">
-                <div className="border-border bg-muted border-b px-6 py-4">
-                    <h3 className="text-foreground text-lg font-medium">Revenue by Film</h3>
+            <div className="overflow-hidden border rounded-lg shadow-sm border-border bg-card">
+                <div className="px-6 py-4 border-b border-border bg-muted">
+                    <h3 className="text-lg font-medium text-foreground">Revenue by Film</h3>
                 </div>
                 <div className="px-6 py-2">
                     <div className="overflow-x-auto">
-                        <table className="divide-border min-w-full divide-y">
+                        <table className="min-w-full divide-y divide-border">
                             <thead className="bg-transparent">
                                 <tr>
                                     <th
                                         scope="col"
-                                        className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"
+                                        className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground"
                                     >
                                         Film
                                     </th>
                                     <th
                                         scope="col"
-                                        className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"
+                                        className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground"
                                     >
                                         Transactions
                                     </th>
                                     <th
                                         scope="col"
-                                        className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"
+                                        className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground"
                                     >
                                         Revenue
                                     </th>
                                     <th
                                         scope="col"
-                                        className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"
+                                        className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground"
                                     >
                                         % of Total
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-border divide-y">
+                            <tbody className="divide-y divide-border">
                                 {filmRevenue.length > 0 ? (
                                     filmRevenue.map((item) => (
-                                        <tr key={item.id} className="hover:bg-muted/40 transition-colors">
+                                        <tr key={item.id} className="transition-colors hover:bg-muted/40">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <FilmIcon className="text-primary mr-2 h-5 w-5" />
-                                                    <div className="text-foreground text-sm font-medium">{item.title}</div>
+                                                    <FilmIcon className="w-5 h-5 mr-2 text-primary" />
+                                                    <div className="text-sm font-medium text-foreground">{item.title}</div>
                                                 </div>
                                             </td>
-                                            <td className="text-foreground px-6 py-4 text-sm whitespace-nowrap">{item.count}</td>
-                                            <td className="text-foreground px-6 py-4 text-sm font-medium whitespace-nowrap">
+                                            <td className="px-6 py-4 text-sm text-foreground whitespace-nowrap">{item.count}</td>
+                                            <td className="px-6 py-4 text-sm font-medium text-foreground whitespace-nowrap">
                                                 {formatCurrency(item.revenue)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <span className="text-foreground mr-2 text-sm">
+                                                    <span className="mr-2 text-sm text-foreground">
                                                         {((item.revenue / totalRevenue) * 100).toFixed(1)}%
                                                     </span>
-                                                    <div className="bg-muted h-2 w-32 overflow-hidden rounded-full">
+                                                    <div className="w-32 h-2 overflow-hidden rounded-full bg-muted">
                                                         <div
-                                                            className="bg-primary h-full"
+                                                            className="h-full bg-primary"
                                                             style={{
                                                                 width: `${(item.revenue / totalRevenue) * 100}%`,
                                                             }}
@@ -421,8 +421,8 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                                     <tr>
                                         <td colSpan={4} className="px-6 py-12 text-center">
                                             <div className="flex flex-col items-center justify-center">
-                                                <CreditCardIcon className="text-muted-foreground mb-4 h-12 w-12" />
-                                                <p className="text-muted-foreground text-sm">No revenue data available for this period.</p>
+                                                <CreditCardIcon className="w-12 h-12 mb-4 text-muted-foreground" />
+                                                <p className="text-sm text-muted-foreground">No revenue data available for this period.</p>
                                             </div>
                                         </td>
                                     </tr>

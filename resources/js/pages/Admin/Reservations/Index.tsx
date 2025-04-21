@@ -76,10 +76,65 @@ export default function Index({ reservations, films, screenings, filters, status
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [reservationToDelete, setReservationToDelete] = useState<number | null>(null);
 
+    // Use React's useEffect to trigger filtering when form data changes
+    React.useEffect(() => {
+        // Don't run on initial mount
+        const currentFilters = {
+            film_id: data.film_id,
+            screening_id: data.screening_id,
+            status: data.status,
+            date: data.date
+        };
+
+        if (JSON.stringify(filters) !== JSON.stringify(currentFilters)) {
+            // Use debounce to avoid rapid-fire requests when multiple filters change
+            const timeoutId = setTimeout(() => {
+                // Double check that the component is still mounted before making the request
+                get(route('admin.reservations.index'), {
+                    preserveState: true,
+                    replace: true,
+                });
+            }, 300);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [data.film_id, data.screening_id, data.status, data.date]);
+
+    // Handle film filter change with debounce handling
+    const handleFilmChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+
+        // First set the film ID
+        setData('film_id', value);
+
+        // Then clear the screening ID - this needs to happen after setting film_id
+        // but before the filtering happens
+        if (data.screening_id) {
+            setData('screening_id', '');
+        }
+    };
+
+    // Handle screening filter change
+    const handleScreeningChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setData('screening_id', e.target.value);
+    };
+
+    // Handle status filter change
+    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setData('status', e.target.value);
+    };
+
+    // Handle date filter change
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setData('date', e.target.value);
+    };
+
+    // Keep the form submission handler for compatibility
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         get(route('admin.reservations.index'), {
             preserveState: true,
+            replace: true,
         });
     };
 
@@ -139,15 +194,21 @@ export default function Index({ reservations, films, screenings, filters, status
     };
 
     const handleClearFilters = () => {
+        // Clear all filters in a consistent way
         setData({
             film_id: '',
             screening_id: '',
             status: '',
             date: '',
         });
-        get(route('admin.reservations.index'), {
-            preserveState: true,
-        });
+
+        // Use a small timeout to ensure state is updated before triggering the request
+        setTimeout(() => {
+            get(route('admin.reservations.index'), {
+                preserveState: true,
+                replace: true,
+            });
+        }, 50);
     };
 
     const getStatusBadgeClass = (status: string) => {
@@ -168,31 +229,25 @@ export default function Index({ reservations, films, screenings, filters, status
             <Head title="Reservations Management" />
 
             {/* Header with actions */}
-            <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
-                    <CreditCardIcon className="text-primary mr-2 h-6 w-6" />
-                    <h2 className="text-foreground text-lg font-semibold">Reservations</h2>
-                    <span className="bg-muted ml-3 rounded-md px-2 py-1 text-xs font-medium">{reservations.total} total</span>
+                    <CreditCardIcon className="w-6 h-6 mr-2 text-primary" />
+                    <h2 className="text-lg font-semibold text-foreground">Reservations</h2>
+                    <span className="px-2 py-1 ml-3 text-xs font-medium rounded-md bg-muted">{reservations.total} total</span>
                 </div>
             </div>
 
             {/* Search and filters */}
-            <div className="border-border bg-card mb-6 rounded-lg border shadow-sm">
-                <div className="p-4">
+            <div className="bg-card">
+                <div>
                     <form onSubmit={handleSearch} className="space-y-4">
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                             <div>
-                                <label htmlFor="film_id" className="text-foreground mb-1.5 block text-sm font-medium">
-                                    Filter by Film
-                                </label>
                                 <select
                                     id="film_id"
                                     value={data.film_id}
-                                    onChange={(e) => {
-                                        setData('film_id', e.target.value);
-                                        setData('screening_id', '');
-                                    }}
-                                    className="focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2"
+                                    onChange={handleFilmChange}
+                                    className="w-full px-3 py-2 border rounded-md focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground"
                                 >
                                     <option value="">All Films</option>
                                     {films.map((film) => (
@@ -204,14 +259,11 @@ export default function Index({ reservations, films, screenings, filters, status
                             </div>
 
                             <div>
-                                <label htmlFor="screening_id" className="text-foreground mb-1.5 block text-sm font-medium">
-                                    Filter by Screening
-                                </label>
                                 <select
                                     id="screening_id"
                                     value={data.screening_id}
-                                    onChange={(e) => setData('screening_id', e.target.value)}
-                                    className="focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2"
+                                    onChange={handleScreeningChange}
+                                    className="w-full px-3 py-2 border rounded-md focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground"
                                     disabled={!data.film_id || screenings.length === 0}
                                 >
                                     <option value="">All Screenings</option>
@@ -224,14 +276,11 @@ export default function Index({ reservations, films, screenings, filters, status
                             </div>
 
                             <div>
-                                <label htmlFor="status" className="text-foreground mb-1.5 block text-sm font-medium">
-                                    Filter by Status
-                                </label>
                                 <select
                                     id="status"
                                     value={data.status}
-                                    onChange={(e) => setData('status', e.target.value)}
-                                    className="focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2"
+                                    onChange={handleStatusChange}
+                                    className="w-full px-3 py-2 border rounded-md focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground"
                                 >
                                     <option value="">All Statuses</option>
                                     {statuses.map((status) => (
@@ -243,33 +292,22 @@ export default function Index({ reservations, films, screenings, filters, status
                             </div>
 
                             <div>
-                                <label htmlFor="date" className="text-foreground mb-1.5 block text-sm font-medium">
-                                    Filter by Date
-                                </label>
                                 <input
                                     id="date"
                                     type="date"
                                     value={data.date}
-                                    onChange={(e) => setData('date', e.target.value)}
-                                    className="focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2"
+                                    onChange={handleDateChange}
+                                    className="w-full px-3 py-2 border rounded-md focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex items-center space-x-3">
-                            <button
-                                type="submit"
-                                className="bg-primary hover:bg-primary/90 focus:ring-primary/30 flex items-center rounded-md px-4 py-2 text-sm font-medium text-white transition focus:ring-2 focus:outline-none disabled:opacity-70"
-                                disabled={processing}
-                            >
-                                <MagnifyingGlassIcon className="mr-1.5 h-4 w-4" />
-                                Filter
-                            </button>
+                        <div className="flex items-center justify-end space-x-3">
                             {(data.film_id || data.screening_id || data.status || data.date) && (
                                 <button
                                     type="button"
                                     onClick={handleClearFilters}
-                                    className="border-border text-foreground hover:bg-muted inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium transition"
+                                    className="inline-flex items-center px-4 py-2 text-sm font-medium transition border rounded-md border-border text-foreground hover:bg-muted"
                                 >
                                     Clear Filters
                                 </button>
@@ -281,48 +319,48 @@ export default function Index({ reservations, films, screenings, filters, status
 
             {/* Reservations list table */}
             <div className="overflow-hidden rounded-lg shadow">
-                <div className="border-border bg-card relative overflow-x-auto border">
-                    <table className="divide-border min-w-full divide-y">
+                <div className="relative overflow-x-auto border border-border bg-card">
+                    <table className="min-w-full divide-y divide-border">
                         <thead className="bg-muted">
                             <tr>
-                                <th scope="col" className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground">
                                     ID
                                 </th>
-                                <th scope="col" className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground">
                                     Film / Screening
                                 </th>
-                                <th scope="col" className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground">
                                     Customer
                                 </th>
-                                <th scope="col" className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground">
                                     Date Created
                                 </th>
-                                <th scope="col" className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground">
                                     Seats
                                 </th>
-                                <th scope="col" className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground">
                                     Total
                                 </th>
-                                <th scope="col" className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground">
                                     Status
                                 </th>
-                                <th scope="col" className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left uppercase text-muted-foreground">
                                     Actions
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-border bg-card divide-y">
+                        <tbody className="divide-y divide-border bg-card">
                             {reservations.data.length > 0 ? (
                                 reservations.data.map((reservation) => (
-                                    <tr key={reservation.id} className="hover:bg-muted/40 transition-colors">
-                                        <td className="text-foreground px-6 py-4 text-sm font-medium whitespace-nowrap">#{reservation.id}</td>
+                                    <tr key={reservation.id} className="transition-colors hover:bg-muted/40">
+                                        <td className="px-6 py-4 text-sm font-medium text-foreground whitespace-nowrap">#{reservation.id}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
-                                                <FilmIcon className="text-primary mr-2 h-5 w-5" />
+                                                <FilmIcon className="w-5 h-5 mr-2 text-primary" />
                                                 <div>
-                                                    <div className="text-foreground text-sm font-medium">{reservation.screening.film.title}</div>
-                                                    <div className="text-muted-foreground flex items-center text-xs">
-                                                        <CalendarIcon className="mr-1 h-3 w-3" />
+                                                    <div className="text-sm font-medium text-foreground">{reservation.screening.film.title}</div>
+                                                    <div className="flex items-center text-xs text-muted-foreground">
+                                                        <CalendarIcon className="w-3 h-3 mr-1" />
                                                         {formatDate(reservation.screening.start_time)} {formatTime(reservation.screening.start_time)}
                                                     </div>
                                                 </div>
@@ -330,20 +368,20 @@ export default function Index({ reservations, films, screenings, filters, status
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
-                                                <UserIcon className="text-muted-foreground mr-2 h-5 w-5" />
+                                                <UserIcon className="w-5 h-5 mr-2 text-muted-foreground" />
                                                 <div>
-                                                    <div className="text-foreground text-sm font-medium">
+                                                    <div className="text-sm font-medium text-foreground">
                                                         {reservation.user ? reservation.user.name : reservation.guest_name || 'Guest'}
                                                     </div>
-                                                    <div className="text-muted-foreground text-xs">
+                                                    <div className="text-xs text-muted-foreground">
                                                         {reservation.user ? reservation.user.email : reservation.guest_email || 'No email'}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="text-foreground px-6 py-4 text-sm whitespace-nowrap">{formatDate(reservation.created_at)}</td>
-                                        <td className="text-foreground px-6 py-4 text-center text-sm whitespace-nowrap">{reservation.seats_count}</td>
-                                        <td className="text-foreground px-6 py-4 text-sm font-medium whitespace-nowrap">
+                                        <td className="px-6 py-4 text-sm text-foreground whitespace-nowrap">{formatDate(reservation.created_at)}</td>
+                                        <td className="px-6 py-4 text-sm text-center text-foreground whitespace-nowrap">{reservation.seats_count}</td>
+                                        <td className="px-6 py-4 text-sm font-medium text-foreground whitespace-nowrap">
                                             {formatCurrency(reservation.total_price)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -359,17 +397,17 @@ export default function Index({ reservations, films, screenings, filters, status
                                             <div className="flex space-x-2">
                                                 <Link
                                                     href={route('admin.reservations.show', { reservation: reservation.id })}
-                                                    className="text-primary hover:text-primary/80 transition"
+                                                    className="transition text-primary hover:text-primary/80"
                                                     title="View"
                                                 >
-                                                    <EyeIcon className="h-5 w-5" />
+                                                    <EyeIcon className="w-5 h-5" />
                                                 </Link>
                                                 <button
                                                     onClick={() => handleDelete(reservation.id)}
-                                                    className="text-destructive hover:text-destructive/80 transition"
+                                                    className="transition text-destructive hover:text-destructive/80"
                                                     title="Delete"
                                                 >
-                                                    <TrashIcon className="h-5 w-5" />
+                                                    <TrashIcon className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         </td>
@@ -379,8 +417,8 @@ export default function Index({ reservations, films, screenings, filters, status
                                 <tr>
                                     <td colSpan={8} className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center justify-center">
-                                            <CreditCardIcon className="text-muted-foreground mb-4 h-12 w-12" />
-                                            <p className="text-muted-foreground mb-4 text-sm">
+                                            <CreditCardIcon className="w-12 h-12 mb-4 text-muted-foreground" />
+                                            <p className="mb-4 text-sm text-muted-foreground">
                                                 {data.film_id || data.screening_id || data.status || data.date
                                                     ? 'No reservations match your filter criteria.'
                                                     : 'No reservations have been made yet.'}
@@ -388,7 +426,7 @@ export default function Index({ reservations, films, screenings, filters, status
                                             {(data.film_id || data.screening_id || data.status || data.date) && (
                                                 <button
                                                     onClick={handleClearFilters}
-                                                    className="bg-primary hover:bg-primary/90 focus:ring-primary/30 inline-flex items-center rounded-md px-4 py-2 text-sm font-medium text-white transition focus:ring-2 focus:outline-none"
+                                                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition rounded-md bg-primary hover:bg-primary/90 focus:ring-primary/30 focus:ring-2 focus:outline-none"
                                                 >
                                                     Clear Filters
                                                 </button>
@@ -404,10 +442,10 @@ export default function Index({ reservations, films, screenings, filters, status
 
             {/* Pagination */}
             {reservations.data.length > 0 && reservations.last_page > 1 && (
-                <div className="mt-6 flex items-center justify-between border-t pt-6">
-                    <div className="text-muted-foreground text-sm">
-                        Showing <span className="text-foreground font-medium">{reservations.current_page}</span> of{' '}
-                        <span className="text-foreground font-medium">{reservations.last_page}</span> pages
+                <div className="flex items-center justify-between pt-6 mt-6 border-t">
+                    <div className="text-sm text-muted-foreground">
+                        Showing <span className="font-medium text-foreground">{reservations.current_page}</span> of{' '}
+                        <span className="font-medium text-foreground">{reservations.last_page}</span> pages
                     </div>
                     <div className="flex space-x-2">
                         {reservations.links.map((link, i) => {
@@ -416,9 +454,8 @@ export default function Index({ reservations, films, screenings, filters, status
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${
-                                            !link.url ? 'pointer-events-none opacity-50' : ''
-                                        }`}
+                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${!link.url ? 'pointer-events-none opacity-50' : ''
+                                            }`}
                                     >
                                         Previous
                                     </Link>
@@ -428,9 +465,8 @@ export default function Index({ reservations, films, screenings, filters, status
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${
-                                            !link.url ? 'pointer-events-none opacity-50' : ''
-                                        }`}
+                                        className={`border-border hover:bg-muted flex items-center rounded-md border px-3 py-1 text-sm ${!link.url ? 'pointer-events-none opacity-50' : ''
+                                            }`}
                                     >
                                         Next
                                     </Link>
@@ -440,9 +476,8 @@ export default function Index({ reservations, films, screenings, filters, status
                                     <Link
                                         key={i}
                                         href={link.url || '#'}
-                                        className={`border-border flex h-8 w-8 items-center justify-center rounded-md border text-sm ${
-                                            link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-foreground'
-                                        } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
+                                        className={`border-border flex h-8 w-8 items-center justify-center rounded-md border text-sm ${link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-foreground'
+                                            } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
                                     >
                                         {link.label}
                                     </Link>
@@ -455,29 +490,29 @@ export default function Index({ reservations, films, screenings, filters, status
 
             {/* Delete confirmation modal */}
             {isDeleteModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-card w-full max-w-md rounded-lg p-6 shadow-lg">
-                        <div className="mb-4 flex items-center">
-                            <div className="bg-destructive/10 text-destructive flex h-10 w-10 items-center justify-center rounded-full">
-                                <TrashIcon className="h-5 w-5" />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="w-full max-w-md p-6 rounded-lg shadow-lg bg-card">
+                        <div className="flex items-center mb-4">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-destructive/10 text-destructive">
+                                <TrashIcon className="w-5 h-5" />
                             </div>
-                            <h3 className="text-foreground ml-3 text-lg font-medium">Delete Reservation</h3>
+                            <h3 className="ml-3 text-lg font-medium text-foreground">Delete Reservation</h3>
                         </div>
 
-                        <p className="text-muted-foreground mb-6">
+                        <p className="mb-6 text-muted-foreground">
                             Are you sure you want to delete this reservation? This action cannot be undone and will release all reserved seats.
                         </p>
 
                         <div className="flex justify-end space-x-3">
                             <button
                                 onClick={() => setIsDeleteModalOpen(false)}
-                                className="border-border text-foreground hover:bg-muted rounded-md border px-4 py-2 text-sm font-medium focus:outline-none"
+                                className="px-4 py-2 text-sm font-medium border rounded-md border-border text-foreground hover:bg-muted focus:outline-none"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmDelete}
-                                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-md px-4 py-2 text-sm font-medium focus:outline-none"
+                                className="px-4 py-2 text-sm font-medium rounded-md bg-destructive hover:bg-destructive/90 text-destructive-foreground focus:outline-none"
                             >
                                 Delete
                             </button>
