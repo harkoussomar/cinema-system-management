@@ -70,13 +70,12 @@ export default function AdminLayout({ children, title = 'Dashboard', subtitle }:
                     params: { _t: new Date().getTime() }
                 });
 
-
                 if (response.data.authenticated && response.data.user?.name) {
                     // Force a reload of the current page to refresh auth data
                     // Only reload if we have a valid user
                     router.reload();
                 } else {
-                    console.log('Auth refresh attempt returned no valid user:', response.data);
+                    // Auth refresh attempt returned no valid user
                 }
             } catch (error) {
                 console.error('Error refreshing auth:', error);
@@ -84,28 +83,16 @@ export default function AdminLayout({ children, title = 'Dashboard', subtitle }:
                 setRefreshingAuth(false);
             }
         } else if (refreshAttempts >= 3) {
-            console.log('Max refresh attempts reached, using fallback "Admin" name');
+            // Max refresh attempts reached, using fallback "Admin" name
         }
     };
 
     // Try to refresh auth on initial load if name is missing
     useEffect(() => {
         if (!hasValidUserName && refreshAttempts === 0) {
-            console.log('Missing valid user name, attempting refresh...');
             refreshAuthData();
         }
     }, [hasValidUserName, refreshAttempts]);
-
-    // Log auth data for debugging
-    useEffect(() => {
-        if (process.env.NODE_ENV !== 'production') {
-            console.log('Page props:', pageProps);
-            console.log('Auth data:', auth);
-            console.log('User data:', user);
-            console.log('Has valid name:', hasValidUserName);
-            console.log('Refresh attempts:', refreshAttempts);
-        }
-    }, [pageProps, auth, user, hasValidUserName, refreshAttempts]);
 
     // Always use dark mode
     useEffect(() => {
