@@ -3,6 +3,7 @@ import { CalendarIcon, FilmIcon, MagnifyingGlassIcon } from '@heroicons/react/24
 import { Head, Link, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 
 interface OmdbSearchResult {
     Title: string;
@@ -27,6 +28,27 @@ interface OmdbDetailResult {
     imdbID: string;
     imdbRating: string;
 }
+
+// Animation variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            when: 'beforeChildren',
+            staggerChildren: 0.1,
+        },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { type: 'spring', stiffness: 100 }
+    },
+};
 
 export default function Create() {
     const { data, setData, post, processing, errors, reset } = useForm<{
@@ -204,96 +226,116 @@ export default function Create() {
         <AdminLayout title="Add New Film" subtitle="Create a new film in your catalog">
             <Head title="Add New Film" />
 
-            {/* Header with back button */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                    <FilmIcon className="w-6 h-6 mr-2 text-primary" />
-                    <h2 className="text-lg font-semibold text-foreground">Create Film</h2>
-                </div>
-                <Link
-                    href={route('admin.films.index')}
-                    className="flex items-center px-4 py-2 text-sm font-medium transition border rounded-md border-border text-foreground hover:bg-muted"
+            <motion.div
+                className="container px-4 py-6 mx-auto"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+            >
+                {/* Header with back button */}
+                <motion.div
+                    className="flex items-center justify-between mb-6"
+                    variants={itemVariants}
                 >
-                    Back to Films
-                </Link>
-            </div>
-
-            {/* Main form */}
-            <div className="border rounded-lg shadow-sm border-border bg-card">
-                <div className="p-4 border-b border-border">
-                    <h3 className="font-medium text-foreground">Film Information</h3>
-                    <p className="text-sm text-muted-foreground">Fill in the details for the new film</p>
-                </div>
-
-                <div className="p-6">
-                    {/* Tabs for creation method */}
-                    <div className="flex mb-6 border-b border-border">
-                        <button
-                            type="button"
-                            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'manual'
-                                ? 'border-primary text-primary'
-                                : 'text-muted-foreground hover:text-foreground border-transparent'
-                                }`}
-                            onClick={() => setActiveTab('manual')}
+                    <div className="flex items-center">
+                        <motion.div
+                            className="flex items-center justify-center w-10 h-10 mr-3 rounded-lg bg-primary/10"
+                            whileHover={{ scale: 1.1, rotate: 5 }}
+                            transition={{ type: "spring", stiffness: 400 }}
                         >
-                            <FilmIcon className="inline-block w-4 h-4 mr-1" />
-                            Manual Entry
-                        </button>
-                        <button
-                            type="button"
-                            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'omdb'
-                                ? 'border-primary text-primary'
-                                : 'text-muted-foreground hover:text-foreground border-transparent'
-                                }`}
-                            onClick={() => setActiveTab('omdb')}
+                            <FilmIcon className="w-6 h-6 text-primary" />
+                        </motion.div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-foreground">Create Film</h1>
+                            <p className="text-sm text-muted-foreground">Add a new film to the catalog</p>
+                        </div>
+                    </div>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <Link
+                            href={route('admin.films.index')}
+                            className="flex items-center px-4 py-2 text-sm font-medium transition border rounded-md border-border text-foreground hover:bg-muted"
                         >
-                            <MagnifyingGlassIcon className="inline-block w-4 h-4 mr-1" />
-                            Import from OMDB
-                        </button>
+                            Back to Films
+                        </Link>
+                    </motion.div>
+                </motion.div>
+
+                {/* Main form */}
+                <motion.div
+                    className="overflow-hidden border rounded-lg shadow-sm border-border bg-card"
+                    variants={itemVariants}
+                    whileHover={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <div className="p-4 border-b border-border">
+                        <h3 className="font-medium text-foreground">Film Information</h3>
+                        <p className="text-sm text-muted-foreground">Fill in the details for the new film</p>
                     </div>
 
-                    {activeTab === 'omdb' ? (
-                        <div className="space-y-6">
-                            <div >
-                                <h3 className="mb-4 text-lg font-medium text-foreground">Search for a film</h3>
+                    <div className="p-6">
+                        {/* Tabs for creation method */}
+                        <motion.div
+                            className="flex mb-6 border-b border-border"
+                            variants={itemVariants}
+                        >
+                            <motion.button
+                                type="button"
+                                className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'manual'
+                                    ? 'border-primary text-primary'
+                                    : 'text-muted-foreground hover:text-foreground border-transparent'
+                                    }`}
+                                onClick={() => setActiveTab('manual')}
+                                whileHover={{ y: -2 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                <FilmIcon className="inline-block w-4 h-4 mr-1" />
+                                Manual Entry
+                            </motion.button>
+                            <motion.button
+                                type="button"
+                                className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'omdb'
+                                    ? 'border-primary text-primary'
+                                    : 'text-muted-foreground hover:text-foreground border-transparent'
+                                    }`}
+                                onClick={() => setActiveTab('omdb')}
+                                whileHover={{ y: -2 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                <MagnifyingGlassIcon className="inline-block w-4 h-4 mr-1" />
+                                Import from OMDB
+                            </motion.button>
+                        </motion.div>
 
-                                <form onSubmit={handleSearch} className="mb-6">
-                                    <div className="flex space-x-2">
-                                        <div className="flex-grow">
-                                            <input
-                                                type="text"
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                placeholder="Enter film title..."
-                                                className="w-full px-3 py-2 border rounded-md focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground"
-                                            />
+                        {activeTab === 'omdb' ? (
+                            <motion.div className="space-y-6" variants={itemVariants}>
+                                <div className="flex items-center mb-4">
+                                    <motion.div
+                                        className="relative flex-1 mr-4"
+                                        whileHover={{ scale: 1.02 }}
+                                        transition={{ type: "spring", stiffness: 300 }}
+                                    >
+                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                            <MagnifyingGlassIcon className="w-5 h-5 text-muted-foreground" />
                                         </div>
-                                        <button
-                                            type="submit"
-                                            disabled={isSearching}
-                                            className="inline-flex items-center px-4 py-2 text-sm font-medium transition rounded-md bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary/30 focus:ring-2 focus:outline-none disabled:opacity-70"
-                                        >
-                                            {isSearching ? (
-                                                <>
-                                                    <svg className="w-4 h-4 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                        <path
-                                                            className="opacity-75"
-                                                            fill="currentColor"
-                                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                        ></path>
-                                                    </svg>
-                                                    Searching...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <MagnifyingGlassIcon className="w-4 h-4 mr-1" />
-                                                    Search
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                </form>
+                                        <input
+                                            type="text"
+                                            placeholder="Search for a film title..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full py-2 pl-10 pr-4 border rounded-md bg-background border-input focus:border-primary focus:ring-primary/30"
+                                        />
+                                    </motion.div>
+                                    <motion.button
+                                        type="button"
+                                        onClick={() => handleSearch()}
+                                        disabled={isSearching || !searchQuery.trim()}
+                                        className="inline-flex items-center px-4 py-2 text-sm font-medium transition rounded-md bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        {isSearching ? 'Searching...' : 'Search OMDB'}
+                                    </motion.button>
+                                </div>
 
                                 {searchError && (
                                     <div className="p-4 mb-4 text-sm border rounded-md text-destructive border-destructive/20 bg-destructive/10">
@@ -413,239 +455,235 @@ export default function Create() {
                                         Feature imported film on homepage
                                     </label>
                                 </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <div>
-                                    <label htmlFor="title" className="text-foreground mb-1.5 block text-sm font-medium">
-                                        Title <span className="text-destructive">*</span>
-                                    </label>
-                                    <input
-                                        id="title"
-                                        value={data.title}
-                                        onChange={(e) => setData('title', e.target.value)}
-                                        className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.title ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
-                                            }`}
-                                        required
-                                    />
-                                    {errors.title && <p className="text-destructive mt-1.5 text-sm">{errors.title}</p>}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="director" className="text-foreground mb-1.5 block text-sm font-medium">
-                                        Director
-                                    </label>
-                                    <input
-                                        id="director"
-                                        value={data.director}
-                                        onChange={(e) => setData('director', e.target.value)}
-                                        className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.director ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
-                                            }`}
-                                    />
-                                    {errors.director && <p className="text-destructive mt-1.5 text-sm">{errors.director}</p>}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="genre" className="text-foreground mb-1.5 block text-sm font-medium">
-                                        Genre
-                                    </label>
-                                    <input
-                                        id="genre"
-                                        value={data.genre}
-                                        onChange={(e) => setData('genre', e.target.value)}
-                                        className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.genre ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
-                                            }`}
-                                    />
-                                    {errors.genre && <p className="text-destructive mt-1.5 text-sm">{errors.genre}</p>}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="duration" className="text-foreground mb-1.5 block text-sm font-medium">
-                                        Duration (minutes) <span className="text-destructive">*</span>
-                                    </label>
-                                    <input
-                                        id="duration"
-                                        type="number"
-                                        value={data.duration}
-                                        onChange={(e) => setData('duration', e.target.value)}
-                                        className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.duration ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
-                                            }`}
-                                        required
-                                    />
-                                    {errors.duration && <p className="text-destructive mt-1.5 text-sm">{errors.duration}</p>}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="release_date" className="text-foreground mb-1.5 block text-sm font-medium">
-                                        Release Date
-                                    </label>
-                                    <input
-                                        id="release_date"
-                                        type="date"
-                                        value={data.release_date}
-                                        onChange={(e) => setData('release_date', e.target.value)}
-                                        className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.release_date ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
-                                            }`}
-                                    />
-                                    {errors.release_date && <p className="text-destructive mt-1.5 text-sm">{errors.release_date}</p>}
-                                </div>
-
-                                <div className="flex items-center h-full">
-                                    <div className="flex items-center space-x-2">
-                                        <input
-                                            type="checkbox"
-                                            id="is_featured"
-                                            checked={data.is_featured}
-                                            onChange={(e) => setData('is_featured', e.target.checked)}
-                                            className="w-5 h-5 rounded text-primary focus:ring-primary/30 border-input"
-                                        />
-                                        <label htmlFor="is_featured" className="text-sm font-medium text-foreground">
-                                            Feature this film on homepage
+                            </motion.div>
+                        ) : (
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <motion.div className="grid grid-cols-1 gap-6 md:grid-cols-2" variants={itemVariants}>
+                                    <div>
+                                        <label htmlFor="title" className="text-foreground mb-1.5 block text-sm font-medium">
+                                            Title <span className="text-destructive">*</span>
                                         </label>
+                                        <input
+                                            id="title"
+                                            value={data.title}
+                                            onChange={(e) => setData('title', e.target.value)}
+                                            className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.title ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
+                                                }`}
+                                            required
+                                        />
+                                        {errors.title && <p className="text-destructive mt-1.5 text-sm">{errors.title}</p>}
                                     </div>
-                                </div>
-                            </div>
 
-                            <div>
-                                <label htmlFor="description" className="text-foreground mb-1.5 block text-sm font-medium">
-                                    Description <span className="text-destructive">*</span>
-                                </label>
-                                <textarea
-                                    id="description"
-                                    rows={4}
-                                    value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                    className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.description ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
-                                        }`}
-                                    required
-                                />
-                                {errors.description && <p className="text-destructive mt-1.5 text-sm">{errors.description}</p>}
-                            </div>
+                                    <div>
+                                        <label htmlFor="director" className="text-foreground mb-1.5 block text-sm font-medium">
+                                            Director
+                                        </label>
+                                        <input
+                                            id="director"
+                                            value={data.director}
+                                            onChange={(e) => setData('director', e.target.value)}
+                                            className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.director ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
+                                                }`}
+                                        />
+                                        {errors.director && <p className="text-destructive mt-1.5 text-sm">{errors.director}</p>}
+                                    </div>
 
-                            <div className="p-6 border rounded-lg border-border">
-                                <label className="block mb-3 text-sm font-medium text-foreground">Poster Image</label>
+                                    <div>
+                                        <label htmlFor="genre" className="text-foreground mb-1.5 block text-sm font-medium">
+                                            Genre
+                                        </label>
+                                        <input
+                                            id="genre"
+                                            value={data.genre}
+                                            onChange={(e) => setData('genre', e.target.value)}
+                                            className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.genre ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
+                                                }`}
+                                        />
+                                        {errors.genre && <p className="text-destructive mt-1.5 text-sm">{errors.genre}</p>}
+                                    </div>
 
-                                {/* Tabs for upload type */}
-                                <div className="flex mb-4 border-b border-border">
-                                    <button
-                                        type="button"
-                                        className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${data.poster_type === 'file'
-                                            ? 'border-primary text-primary'
-                                            : 'text-muted-foreground hover:text-foreground border-transparent'
+                                    <div>
+                                        <label htmlFor="duration" className="text-foreground mb-1.5 block text-sm font-medium">
+                                            Duration (minutes) <span className="text-destructive">*</span>
+                                        </label>
+                                        <input
+                                            id="duration"
+                                            type="number"
+                                            value={data.duration}
+                                            onChange={(e) => setData('duration', e.target.value)}
+                                            className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.duration ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
+                                                }`}
+                                            required
+                                        />
+                                        {errors.duration && <p className="text-destructive mt-1.5 text-sm">{errors.duration}</p>}
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="release_date" className="text-foreground mb-1.5 block text-sm font-medium">
+                                            Release Date
+                                        </label>
+                                        <input
+                                            id="release_date"
+                                            type="date"
+                                            value={data.release_date}
+                                            onChange={(e) => setData('release_date', e.target.value)}
+                                            className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.release_date ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
+                                                }`}
+                                        />
+                                        {errors.release_date && <p className="text-destructive mt-1.5 text-sm">{errors.release_date}</p>}
+                                    </div>
+
+                                    <div className="flex items-center h-full">
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="checkbox"
+                                                id="is_featured"
+                                                checked={data.is_featured}
+                                                onChange={(e) => setData('is_featured', e.target.checked)}
+                                                className="w-5 h-5 rounded text-primary focus:ring-primary/30 border-input"
+                                            />
+                                            <label htmlFor="is_featured" className="text-sm font-medium text-foreground">
+                                                Feature this film on homepage
+                                            </label>
+                                        </div>
+                                    </div>
+                                </motion.div>
+
+                                <motion.div variants={itemVariants}>
+                                    <label htmlFor="description" className="text-foreground mb-1.5 block text-sm font-medium">
+                                        Description <span className="text-destructive">*</span>
+                                    </label>
+                                    <textarea
+                                        id="description"
+                                        rows={4}
+                                        value={data.description}
+                                        onChange={(e) => setData('description', e.target.value)}
+                                        className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.description ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
                                             }`}
-                                        onClick={() => handlePosterTypeChange('file')}
-                                    >
-                                        <FilmIcon className="inline-block w-4 h-4 mr-1" />
-                                        Upload Image
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${data.poster_type === 'url'
-                                            ? 'border-primary text-primary'
-                                            : 'text-muted-foreground hover:text-foreground border-transparent'
-                                            }`}
-                                        onClick={() => handlePosterTypeChange('url')}
-                                    >
-                                        <CalendarIcon className="inline-block w-4 h-4 mr-1" />
-                                        Use URL
-                                    </button>
-                                </div>
+                                        required
+                                    />
+                                    {errors.description && <p className="text-destructive mt-1.5 text-sm">{errors.description}</p>}
+                                </motion.div>
 
-                                <div className="flex flex-col items-start space-y-4 md:flex-row md:space-y-0 md:space-x-6">
-                                    <div className="w-full md:w-2/3">
-                                        {data.poster_type === 'file' ? (
-                                            <div className="relative flex flex-col items-center justify-center p-6 transition-colors border-2 border-dashed rounded-lg cursor-pointer border-border bg-muted/40 hover:bg-muted/70">
-                                                <FilmIcon className="w-10 h-10 mb-2 text-muted-foreground" />
-                                                <div className="text-center">
-                                                    <p className="text-sm text-muted-foreground">Drop your image here, or</p>
-                                                    <label
-                                                        htmlFor="poster_image"
-                                                        className="block mt-2 text-sm font-medium cursor-pointer text-primary hover:text-primary/90"
-                                                    >
-                                                        Browse files
-                                                        <input
-                                                            id="poster_image"
-                                                            name="poster_image"
-                                                            type="file"
-                                                            className="sr-only"
-                                                            onChange={handlePosterChange}
-                                                            accept="image/*"
-                                                        />
-                                                    </label>
+                                <motion.div
+                                    className="p-6 border rounded-lg border-border"
+                                    variants={itemVariants}
+                                    whileHover={{ y: -5 }}
+                                    transition={{ type: "spring", stiffness: 300 }}
+                                >
+                                    <label className="block mb-3 text-sm font-medium text-foreground">Poster Image</label>
+
+                                    {/* Tabs for upload type */}
+                                    <div className="flex mb-4 border-b border-border">
+                                        <button
+                                            type="button"
+                                            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${data.poster_type === 'file'
+                                                ? 'border-primary text-primary'
+                                                : 'text-muted-foreground hover:text-foreground border-transparent'
+                                                }`}
+                                            onClick={() => handlePosterTypeChange('file')}
+                                        >
+                                            <FilmIcon className="inline-block w-4 h-4 mr-1" />
+                                            Upload Image
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${data.poster_type === 'url'
+                                                ? 'border-primary text-primary'
+                                                : 'text-muted-foreground hover:text-foreground border-transparent'
+                                                }`}
+                                            onClick={() => handlePosterTypeChange('url')}
+                                        >
+                                            <CalendarIcon className="inline-block w-4 h-4 mr-1" />
+                                            Use URL
+                                        </button>
+                                    </div>
+
+                                    <div className="flex flex-col items-start space-y-4 md:flex-row md:space-y-0 md:space-x-6">
+                                        <div className="w-full md:w-2/3">
+                                            {data.poster_type === 'file' ? (
+                                                <div className="relative flex flex-col items-center justify-center p-6 transition-colors border-2 border-dashed rounded-lg cursor-pointer border-border bg-muted/40 hover:bg-muted/70">
+                                                    <FilmIcon className="w-10 h-10 mb-2 text-muted-foreground" />
+                                                    <div className="text-center">
+                                                        <p className="text-sm text-muted-foreground">Drop your image here, or</p>
+                                                        <label
+                                                            htmlFor="poster_image"
+                                                            className="block mt-2 text-sm font-medium cursor-pointer text-primary hover:text-primary/90"
+                                                        >
+                                                            Browse files
+                                                            <input
+                                                                id="poster_image"
+                                                                name="poster_image"
+                                                                type="file"
+                                                                className="sr-only"
+                                                                onChange={handlePosterChange}
+                                                                accept="image/*"
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                    <p className="mt-2 text-xs text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
                                                 </div>
-                                                <p className="mt-2 text-xs text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                                            ) : (
+                                                <div>
+                                                    <label htmlFor="poster_url" className="text-foreground mb-1.5 block text-sm font-medium">
+                                                        Poster Image URL
+                                                    </label>
+                                                    <input
+                                                        id="poster_url"
+                                                        type="url"
+                                                        value={data.poster_url}
+                                                        onChange={handlePosterUrlChange}
+                                                        placeholder="https://example.com/poster.jpg"
+                                                        className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.poster_url ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
+                                                            }`}
+                                                    />
+                                                    <p className="mt-1 text-xs text-muted-foreground">Enter the direct URL to an image file</p>
+                                                </div>
+                                            )}
+                                            {errors.poster_image && <p className="text-destructive mt-1.5 text-sm">{errors.poster_image}</p>}
+                                            {errors.poster_url && <p className="text-destructive mt-1.5 text-sm">{errors.poster_url}</p>}
+                                            {errors.poster_type && <p className="text-destructive mt-1.5 text-sm">{errors.poster_type}</p>}
+                                        </div>
+
+                                        {posterPreview ? (
+                                            <div className="relative flex items-center justify-center flex-shrink-0 w-32 h-48 overflow-hidden border rounded-lg border-border">
+                                                <img src={posterPreview} alt="Poster preview" className="object-cover w-full h-full" />
                                             </div>
                                         ) : (
-                                            <div>
-                                                <label htmlFor="poster_url" className="text-foreground mb-1.5 block text-sm font-medium">
-                                                    Poster Image URL
-                                                </label>
-                                                <input
-                                                    id="poster_url"
-                                                    type="url"
-                                                    value={data.poster_url}
-                                                    onChange={handlePosterUrlChange}
-                                                    placeholder="https://example.com/poster.jpg"
-                                                    className={`focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 ${errors.poster_url ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
-                                                        }`}
-                                                />
-                                                <p className="mt-1 text-xs text-muted-foreground">Enter the direct URL to an image file</p>
+                                            <div className="flex items-center justify-center flex-shrink-0 w-32 h-48 border rounded-lg border-border bg-muted/40">
+                                                <p className="text-xs text-muted-foreground">Preview</p>
                                             </div>
                                         )}
-                                        {errors.poster_image && <p className="text-destructive mt-1.5 text-sm">{errors.poster_image}</p>}
-                                        {errors.poster_url && <p className="text-destructive mt-1.5 text-sm">{errors.poster_url}</p>}
-                                        {errors.poster_type && <p className="text-destructive mt-1.5 text-sm">{errors.poster_type}</p>}
                                     </div>
+                                </motion.div>
 
-                                    {posterPreview ? (
-                                        <div className="relative flex items-center justify-center flex-shrink-0 w-32 h-48 overflow-hidden border rounded-lg border-border">
-                                            <img src={posterPreview} alt="Poster preview" className="object-cover w-full h-full" />
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center justify-center flex-shrink-0 w-32 h-48 border rounded-lg border-border bg-muted/40">
-                                            <p className="text-xs text-muted-foreground">Preview</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-end space-x-3">
-                                <button
-                                    type="button"
-                                    onClick={() => reset()}
-                                    className="inline-flex items-center px-4 py-2 text-sm font-medium border rounded-md border-border text-foreground hover:bg-muted focus:ring-2 focus:outline-none disabled:opacity-70"
-                                    disabled={processing}
+                                <motion.div
+                                    className="flex justify-end space-x-3 pt-6"
+                                    variants={itemVariants}
                                 >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="inline-flex items-center px-4 py-2 text-sm font-medium transition rounded-md bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary/30 focus:ring-2 focus:outline-none disabled:opacity-70"
-                                    disabled={processing}
-                                >
-                                    {processing ? (
-                                        <>
-                                            <svg className="w-4 h-4 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path
-                                                    className="opacity-75"
-                                                    fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                ></path>
-                                            </svg>
-                                            Processing...
-                                        </>
-                                    ) : (
-                                        'Create Film'
-                                    )}
-                                </button>
-                            </div>
-                        </form>
-                    )}
-                </div>
-            </div>
+                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                        <Link
+                                            href={route('admin.films.index')}
+                                            className="inline-flex items-center px-4 py-2 text-sm font-medium transition border rounded-md border-border text-foreground hover:bg-muted"
+                                        >
+                                            Cancel
+                                        </Link>
+                                    </motion.div>
+                                    <motion.button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="inline-flex items-center px-4 py-2 text-sm font-medium transition shadow-sm rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        {processing ? 'Creating...' : 'Create Film'}
+                                    </motion.button>
+                                </motion.div>
+                            </form>
+                        )}
+                    </div>
+                </motion.div>
+            </motion.div>
         </AdminLayout>
     );
 }

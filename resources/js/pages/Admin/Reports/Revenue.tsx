@@ -2,6 +2,7 @@ import AdminLayout from '@/layouts/AdminLayout';
 import { CalendarIcon, ChartBarIcon, CreditCardIcon, FilmIcon } from '@heroicons/react/24/outline';
 import { Head, Link, useForm } from '@inertiajs/react';
 import Chart from 'chart.js/auto';
+import { motion } from 'framer-motion';
 import React, { useEffect, useRef } from 'react';
 
 interface Film {
@@ -31,6 +32,30 @@ interface Props {
         film_id?: string;
     };
 }
+
+// Animation variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.05
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            type: "spring",
+            stiffness: 300,
+            damping: 24
+        }
+    }
+};
 
 export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films, period, filters }: Props) {
     const { data, setData, get } = useForm({
@@ -196,7 +221,12 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
             <Head title="Revenue Report" />
 
             {/* Report Navigation */}
-            <div className="mb-6 border rounded-lg shadow-sm border-border bg-card">
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mb-6 border rounded-lg shadow-sm border-border bg-card"
+            >
                 <div className="flex overflow-x-auto">
                     <Link
                         href={route('admin.reports.films')}
@@ -220,99 +250,166 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                         Screening Occupancy
                     </Link>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Header with actions */}
-            <div className="flex items-center justify-between mb-6">
+            <motion.div
+                className="flex items-center justify-between mb-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+            >
                 <div className="flex items-center">
-                    <CreditCardIcon className="w-6 h-6 mr-2 text-primary" />
-                    <h2 className="text-lg font-semibold text-foreground">Revenue</h2>
-                </div>
-            </div>
-
-            {/* Period & Film Filter */}
-            <div className="mb-6 bg-card">
-                <div>
-                    <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-                        <div>
-                            <div className="flex flex-wrap gap-2">
-                                <button
-                                    onClick={() => handlePeriodChange('week')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'week' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                        }`}
-                                >
-                                    Last Week
-                                </button>
-                                <button
-                                    onClick={() => handlePeriodChange('month')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'month' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                        }`}
-                                >
-                                    Last Month
-                                </button>
-                                <button
-                                    onClick={() => handlePeriodChange('quarter')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'quarter' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                        }`}
-                                >
-                                    Last Quarter
-                                </button>
-                                <button
-                                    onClick={() => handlePeriodChange('year')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'year' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                        }`}
-                                >
-                                    Last Year
-                                </button>
-                                <button
-                                    onClick={() => handlePeriodChange('all')}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${data.period === 'all' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                        }`}
-                                >
-                                    All Time
-                                </button>
-                            </div>
-                        </div>
-                        <div className="w-full md:w-64">
-                            <select
-                                id="film_id"
-                                value={data.film_id}
-                                onChange={handleFilmChange}
-                                className="w-full px-3 py-2 border rounded-md focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground"
-                            >
-                                <option value="">All Films</option>
-                                {films.map((film) => (
-                                    <option key={film.id} value={film.id}>
-                                        {film.title}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                    <motion.div
+                        whileHover={{ rotate: 10 }}
+                        className="flex items-center justify-center w-10 h-10 mr-2 rounded-lg bg-primary/10"
+                    >
+                        <CreditCardIcon className="w-6 h-6 text-primary" />
+                    </motion.div>
+                    <div>
+                        <h2 className="text-lg font-semibold text-foreground">Revenue Analysis</h2>
+                        <p className="text-sm text-muted-foreground">
+                            Based on {data.period === 'week' ? 'last week' :
+                                    data.period === 'month' ? 'last month' :
+                                    data.period === 'quarter' ? 'last quarter' :
+                                    data.period === 'year' ? 'last year' : 'all time'} financial data
+                        </p>
                     </div>
                 </div>
-            </div>
+            </motion.div>
+
+            {/* Period & Film Filter */}
+            <motion.div
+                className="p-4 mb-6 border rounded-lg shadow-sm border-border bg-card"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+            >
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <div className="flex flex-wrap gap-2">
+                            <motion.button
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => handlePeriodChange('week')}
+                                className={`px-3 py-1.5 text-sm font-medium transition-colors rounded-md ${
+                                    data.period === 'week'
+                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                }`}
+                            >
+                                Last Week
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => handlePeriodChange('month')}
+                                className={`px-3 py-1.5 text-sm font-medium transition-colors rounded-md ${
+                                    data.period === 'month'
+                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                }`}
+                            >
+                                Last Month
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => handlePeriodChange('quarter')}
+                                className={`px-3 py-1.5 text-sm font-medium transition-colors rounded-md ${
+                                    data.period === 'quarter'
+                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                }`}
+                            >
+                                Last Quarter
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => handlePeriodChange('year')}
+                                className={`px-3 py-1.5 text-sm font-medium transition-colors rounded-md ${
+                                    data.period === 'year'
+                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                }`}
+                            >
+                                Last Year
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => handlePeriodChange('all')}
+                                className={`px-3 py-1.5 text-sm font-medium transition-colors rounded-md ${
+                                    data.period === 'all'
+                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                }`}
+                            >
+                                All Time
+                            </motion.button>
+                        </div>
+                    </div>
+                    <div className="w-full md:w-64">
+                        <motion.select
+                            whileHover={{ scale: 1.02 }}
+                            transition={{ duration: 0.2 }}
+                            id="film_id"
+                            value={data.film_id}
+                            onChange={handleFilmChange}
+                            className="w-full px-3 py-2 border rounded-md shadow-sm focus:border-primary focus:ring-primary/30 bg-background text-foreground border-input placeholder:text-muted-foreground"
+                        >
+                            <option value="">All Films</option>
+                            {films.map((film) => (
+                                <option key={film.id} value={film.id}>
+                                    {film.title}
+                                </option>
+                            ))}
+                        </motion.select>
+                    </div>
+                </div>
+            </motion.div>
 
             {/* Key Figures */}
-            <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-3">
-                <div className="p-6 overflow-hidden border rounded-lg shadow-sm border-border bg-card">
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-3"
+            >
+                <motion.div
+                    variants={itemVariants}
+                    className="p-6 overflow-hidden transition-shadow border rounded-lg shadow-sm hover:shadow-md border-border bg-card"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="mb-1 text-sm font-medium text-muted-foreground">Total Revenue</p>
                             <h4 className="text-2xl font-bold text-foreground">{formatCurrency(totalRevenue)}</h4>
                         </div>
-                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
+                        <motion.div
+                            whileHover={{ rotate: 10, scale: 1.1 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary"
+                        >
                             <CreditCardIcon className="w-6 h-6" />
-                        </div>
+                        </motion.div>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="p-6 overflow-hidden border rounded-lg shadow-sm border-border bg-card">
+                <motion.div
+                    variants={itemVariants}
+                    className="p-6 overflow-hidden transition-shadow border rounded-lg shadow-sm hover:shadow-md border-border bg-card"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="mb-1 text-sm font-medium text-muted-foreground">Total Transactions</p>
                             <h4 className="text-2xl font-bold text-foreground">{transactionCount}</h4>
                         </div>
-                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
+                        <motion.div
+                            whileHover={{ rotate: 10, scale: 1.1 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary"
+                        >
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path
                                     strokeLinecap="round"
@@ -321,11 +418,14 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                                     d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"
                                 />
                             </svg>
-                        </div>
+                        </motion.div>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="p-6 overflow-hidden border rounded-lg shadow-sm border-border bg-card">
+                <motion.div
+                    variants={itemVariants}
+                    className="p-6 overflow-hidden transition-shadow border rounded-lg shadow-sm hover:shadow-md border-border bg-card"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="mb-1 text-sm font-medium text-muted-foreground">Avg. Transaction</p>
@@ -333,25 +433,39 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                                 {formatCurrency(avgTransaction)}
                             </h4>
                         </div>
-                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
+                        <motion.div
+                            whileHover={{ rotate: 10, scale: 1.1 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary"
+                        >
                             <ChartBarIcon className="w-6 h-6" />
-                        </div>
+                        </motion.div>
                     </div>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
 
             {/* Revenue Chart */}
-            <div className="mb-6 overflow-hidden border rounded-lg shadow-sm border-border bg-card h-80">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="mb-6 overflow-hidden transition-shadow border rounded-lg shadow-sm hover:shadow-md border-border bg-card h-80"
+            >
                 <div className="px-6 py-4 border-b border-border bg-muted">
                     <h3 className="text-lg font-medium text-foreground">Daily Revenue</h3>
                 </div>
                 <div className="h-[calc(100%-4rem)] p-6">
                     <canvas ref={chartRef}></canvas>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Revenue by Film */}
-            <div className="overflow-hidden border rounded-lg shadow-sm border-border bg-card">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="overflow-hidden transition-shadow border rounded-lg shadow-sm hover:shadow-md border-border bg-card"
+            >
                 <div className="px-6 py-4 border-b border-border bg-muted">
                     <h3 className="text-lg font-medium text-foreground">Revenue by Film</h3>
                 </div>
@@ -388,11 +502,22 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {filmRevenue.length > 0 ? (
-                                    filmRevenue.map((item) => (
-                                        <tr key={item.id} className="transition-colors hover:bg-muted/40">
+                                    filmRevenue.map((item, index) => (
+                                        <motion.tr
+                                            key={item.id}
+                                            className="transition-colors hover:bg-muted/40"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3, delay: 0.05 * index }}
+                                        >
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <FilmIcon className="w-5 h-5 mr-2 text-primary" />
+                                                    <motion.div
+                                                        whileHover={{ scale: 1.2, rotate: 5 }}
+                                                        transition={{ duration: 0.2 }}
+                                                    >
+                                                        <FilmIcon className="w-5 h-5 mr-2 text-primary" />
+                                                    </motion.div>
                                                     <div className="text-sm font-medium text-foreground">{item.title}</div>
                                                 </div>
                                             </td>
@@ -405,23 +530,29 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                                                     <span className="mr-2 text-sm text-foreground">
                                                         {((item.revenue / totalRevenue) * 100).toFixed(1)}%
                                                     </span>
-                                                    <div className="w-32 h-2 overflow-hidden rounded-full bg-muted">
-                                                        <div
+                                                    <div className="w-32 h-2 mr-2 overflow-hidden rounded-full bg-muted">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${(item.revenue / totalRevenue) * 100}%` }}
+                                                            transition={{ duration: 0.8, delay: index * 0.1 }}
                                                             className="h-full bg-primary"
-                                                            style={{
-                                                                width: `${(item.revenue / totalRevenue) * 100}%`,
-                                                            }}
-                                                        ></div>
+                                                        />
                                                     </div>
                                                 </div>
                                             </td>
-                                        </tr>
+                                        </motion.tr>
                                     ))
                                 ) : (
                                     <tr>
                                         <td colSpan={4} className="px-6 py-12 text-center">
                                             <div className="flex flex-col items-center justify-center">
-                                                <CreditCardIcon className="w-12 h-12 mb-4 text-muted-foreground" />
+                                                <motion.div
+                                                    initial={{ scale: 0.5, opacity: 0 }}
+                                                    animate={{ scale: 1, opacity: 1 }}
+                                                    transition={{ duration: 0.5 }}
+                                                >
+                                                    <CreditCardIcon className="w-12 h-12 mb-4 text-muted-foreground" />
+                                                </motion.div>
                                                 <p className="text-sm text-muted-foreground">No revenue data available for this period.</p>
                                             </div>
                                         </td>
@@ -431,7 +562,7 @@ export default function Revenue({ dailyRevenue, filmRevenue, totalRevenue, films
                         </table>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </AdminLayout>
     );
 }
