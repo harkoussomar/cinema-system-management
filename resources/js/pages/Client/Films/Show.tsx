@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { route } from 'ziggy-js';
+import { formatDate, formatTime } from '../../../utils/dateUtils';
 
 interface Seat {
     id: number;
@@ -61,16 +62,6 @@ export default function Show({ film, screenings }: FilmShowProps) {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-    };
-
-    const formatTime = (dateTimeString: string) => {
-        const date = new Date(dateTimeString);
-        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    };
-
     // Animation variants
     const fadeIn = {
         hidden: { opacity: 0, y: 20 },
@@ -101,20 +92,26 @@ export default function Show({ film, screenings }: FilmShowProps) {
                 }}
             >
                 {/* Cinematic Hero */}
-                <section className="relative py-32 overflow-hidden bg-black">
+                <section className="relative py-32 overflow-hidden">
                     {/* Background elements */}
                     <div className="absolute inset-0 z-0 opacity-20">
                         <div
                             className="absolute inset-0"
                             style={{
-                                backgroundImage: `url(${film.poster_image ? `/storage/${film.poster_image}` : '/storage/images/cinema-pattern.jpg'})`,
+                                backgroundImage: `url(${
+                                    film.poster_image
+                                        ? film.poster_image.startsWith('http')
+                                            ? film.poster_image
+                                            : `/storage/${film.poster_image}`
+                                        : '/storage/images/cinema-pattern.jpg'
+                                })`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
-                                filter: 'blur(30px)',
+                                filter: 'blur(10px)',
                                 transform: `scale(1.1) translateY(${scrollY * 0.05}px)`,
                             }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-gray-900/10" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-gray-900/80 to-gray-900/10" />
                     </div>
 
                     {/* Film info header */}
@@ -135,11 +132,7 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                 {film.poster_image ? (
                                     <div className="relative aspect-[2/3]">
                                         <img
-                                            src={
-                                                film.poster_image.startsWith('http')
-                                                    ? film.poster_image
-                                                    : `/storage/${film.poster_image}`
-                                            }
+                                            src={film.poster_image.startsWith('http') ? film.poster_image : `/storage/${film.poster_image}`}
                                             alt={film.title}
                                             className="object-cover object-center w-full h-full"
                                         />
@@ -341,10 +334,11 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                                     variants={scaleIn}
                                                     whileHover={{ scale: 1.05 }}
                                                     whileTap={{ scale: 0.95 }}
-                                                    className={`relative overflow-hidden rounded-full px-6 py-3 text-sm font-medium transition-all duration-200 ${selectedDate === date
-                                                        ? 'bg-primary shadow-primary/20 text-white shadow-lg'
-                                                        : 'border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700'
-                                                        }`}
+                                                    className={`relative overflow-hidden rounded-full px-6 py-3 text-sm font-medium transition-all duration-200 ${
+                                                        selectedDate === date
+                                                            ? 'bg-primary shadow-primary/20 text-white shadow-lg'
+                                                            : 'border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                                    }`}
                                                 >
                                                     {formatDate(date)}
                                                     {selectedDate === date && (
@@ -373,8 +367,9 @@ export default function Show({ film, screenings }: FilmShowProps) {
                                                         <motion.div
                                                             key={screening.id}
                                                             whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                                                            className={`relative overflow-hidden rounded-xl border border-gray-700 bg-gradient-to-br from-gray-800 to-gray-900 p-6 shadow-xl ${screening.is_fully_booked ? 'opacity-60' : ''
-                                                                }`}
+                                                            className={`relative overflow-hidden rounded-xl border border-gray-700 bg-gradient-to-br from-gray-800 to-gray-900 p-6 shadow-xl ${
+                                                                screening.is_fully_booked ? 'opacity-60' : ''
+                                                            }`}
                                                         >
                                                             <div className="absolute top-0 left-0 right-0 h-1 from-primary to-primary/50 bg-gradient-to-r" />
 

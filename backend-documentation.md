@@ -2,418 +2,441 @@
 
 ## Overview
 
-This document provides a comprehensive overview of the backend architecture for the cinema management system. The application is built using Laravel PHP framework with MySQL database, following MVC design pattern and RESTful API principles.
+The backend of the Cinema System Management application is built using Laravel, a popular PHP framework that follows the MVC (Model-View-Controller) architectural pattern. This document details the architecture, components, and implementation patterns used in the backend codebase.
 
-## Tech Stack
+## Technologies Used
 
-- **Framework**: Laravel
-- **Language**: PHP
-- **Database**: MySQL
-- **Authentication**: Laravel's built-in authentication with guards for multi-role support
-- **API**: RESTful API endpoints
-- **Frontend Integration**: Inertia.js
-- **File Storage**: Laravel's Storage facade
+- **Laravel 12**: PHP framework for web application development
+- **PHP 8.2+**: Programming language
+- **MySQL/PostgreSQL**: Relational database management system
+- **Laravel Sanctum**: Authentication system
+- **Inertia.js Server Adapter**: Bridge between Laravel and React
+- **DomPDF**: PDF generation for tickets and reports
+- **PHP Barcode Generator**: Barcode generation for tickets
 
-## Architecture
+## MVC Architecture
 
-The backend follows a layered architecture with clear separation of concerns:
+Laravel implements the Model-View-Controller (MVC) architectural pattern, which separates the application into three main components:
+
+### Models
+
+Models represent the data structure and business logic of the application. They interact with the database and define relationships between different data entities.
+
+### Views
+
+In a traditional Laravel application, views would be Blade templates. However, in this Inertia.js-based application, views are replaced by React components on the frontend. Laravel controllers return Inertia responses that render React components with the provided data.
+
+### Controllers
+
+Controllers handle HTTP requests, process data using models, and return responses. They act as the intermediary between the models and the views (React components).
+
+## Directory Structure
 
 ```
 app/
-├── Console/              # Console commands
-├── Exceptions/           # Exception handlers
+├── Console/                # Console commands
 ├── Http/
-│   ├── Controllers/      # Request handlers
-│   │   ├── Admin/        # Admin area controllers
-│   │   ├── Api/          # API controllers
-│   │   ├── Auth/         # Authentication controllers
-│   │   └── Settings/     # Settings controllers
-│   ├── Middleware/       # HTTP middleware
-│   └── Requests/         # Form requests for validation
-├── Models/               # Database models
-├── Notifications/        # Notification classes
-├── Policies/             # Authorization policies
-├── Providers/            # Service providers
-└── Services/             # Business logic services
+│   ├── Controllers/        # Request handlers
+│   │   ├── Admin/          # Admin-specific controllers
+│   │   ├── Api/            # API controllers
+│   │   ├── Auth/           # Authentication controllers
+│   │   └── Settings/       # Settings controllers
+│   ├── Middleware/         # HTTP middleware
+│   └── Requests/           # Form requests and validation
+├── Models/                 # Database models
+├── Notifications/          # Notification classes
+├── Policies/               # Authorization policies
+├── Providers/              # Service providers
+└── Services/               # Business logic services
 ```
+
+## Controllers and Their Responsibilities
+
+Controllers are responsible for handling HTTP requests, processing data, and returning responses. The application organizes controllers based on their functionality:
+
+### Main Controllers
+
+- **FilmController**: Manages film-related operations (listing, creation, updating, deletion)
+- **ReservationController**: Handles seat reservations, confirmations, and cancellations
+- **AccountController**: Manages user account operations
+
+### Admin Controllers
+
+- **Admin\FilmController**: Admin-specific film management
+- **Admin\ScreeningController**: Management of film screenings
+- **Admin\UserController**: User management by administrators
+- **Admin\ReportController**: Generation of various reports
+
+### API Controllers
+
+- **Api\FilmController**: RESTful API endpoints for films
+- **Api\ReservationController**: API for handling reservations
+- **Api\PaymentController**: API endpoints for payment processing
+
+### Auth Controllers
+
+- **Auth\AuthenticatedSessionController**: Handles login sessions
+- **Auth\RegisteredUserController**: Manages user registration
+- **Auth\PasswordResetLinkController**: Handles password reset requests
+
+## Models and Database Relationships
+
+The application's data is represented by the following key models:
+
+### Core Models
+
+1. **User**
+
+    - Represents users of the system (clients and administrators)
+    - Relationships:
+        - Has many reservations
+
+2. **Film**
+
+    - Represents a film/movie
+    - Relationships:
+        - Has many screenings
+
+3. **Screening**
+
+    - Represents a specific showing of a film
+    - Relationships:
+        - Belongs to a film
+        - Has many reservations
+        - Has many seats through reservations
+
+4. **Reservation**
+
+    - Represents a booking made by a user
+    - Relationships:
+        - Belongs to a user
+        - Belongs to a screening
+        - Has many reservation seats
+        - Has one payment
+
+5. **Seat**
+
+    - Represents a seat in the cinema
+    - Relationships:
+        - Has many reservation seats
+
+6. **ReservationSeat**
+
+    - Pivot model for reservation-seat relationship
+    - Relationships:
+        - Belongs to a reservation
+        - Belongs to a seat
+
+7. **Payment**
+    - Represents a payment for a reservation
+    - Relationships:
+        - Belongs to a reservation
 
 ## Database Schema
 
-The application uses a relational database with the following main tables:
-
-- **users**: Stores user authentication and profile data
-- **films**: Stores movie information
-- **screenings**: Stores screening schedule information
-- **seats**: Stores seat information per screening
-- **reservations**: Stores ticket booking information
-- **reservation_seats**: Maps reservations to specific seats
-- **payments**: Stores payment information for reservations
-
-## Models and Relationships
-
-### Entity Relationship Diagram
-
 ```mermaid
 erDiagram
-    FILM {
-        id int PK
-        title string
-        description text
-        duration int
-        poster_image string
-        genre string
-        release_date date
-        director string
-        is_featured boolean
-        created_at timestamp
-        updated_at timestamp
+    User ||--o{ Reservation : "makes"
+    Film ||--o{ Screening : "has"
+    Screening ||--o{ Reservation : "has"
+    Reservation ||--o{ ReservationSeat : "contains"
+    Seat ||--o{ ReservationSeat : "belongs to"
+    Reservation ||--|| Payment : "has"
+
+    User {
+        int id PK
+        string name
+        string email
+        string password
+        timestamp email_verified_at
+        string role
+        string remember_token
+        timestamps timestamps
     }
 
-    SCREENING {
-        id int PK
-        film_id int FK
-        start_time datetime
-        room string
-        total_seats int
-        price decimal
-        is_active boolean
-        created_at timestamp
-        updated_at timestamp
+    Film {
+        int id PK
+        string title
+        text description
+        int duration
+        date release_date
+        string poster_url
+        timestamps timestamps
     }
 
-    SEAT {
-        id int PK
-        screening_id int FK
-        row string
-        number int
-        status string
-        created_at timestamp
-        updated_at timestamp
+    Screening {
+        int id PK
+        int film_id FK
+        datetime start_time
+        decimal price
+        timestamps timestamps
     }
 
-    RESERVATION {
-        id int PK
-        user_id int FK
-        screening_id int FK
-        status string
-        total_amount decimal
-        confirmation_code string
-        created_at timestamp
-        updated_at timestamp
+    Reservation {
+        int id PK
+        int user_id FK
+        int screening_id FK
+        string status
+        decimal total_price
+        string confirmation_code
+        timestamps timestamps
     }
 
-    RESERVATION_SEAT {
-        id int PK
-        reservation_id int FK
-        seat_id int FK
-        price decimal
-        created_at timestamp
-        updated_at timestamp
+    Seat {
+        int id PK
+        string row
+        int number
+        string type
+        timestamps timestamps
     }
 
-    PAYMENT {
-        id int PK
-        reservation_id int FK
-        amount decimal
-        payment_method string
-        status string
-        transaction_id string
-        created_at timestamp
-        updated_at timestamp
+    ReservationSeat {
+        int id PK
+        int reservation_id FK
+        int seat_id FK
+        timestamps timestamps
     }
 
-    USER {
-        id int PK
-        name string
-        email string
-        password string
-        role string
-        is_admin boolean
-        email_verified_at timestamp
-        last_login_at timestamp
-        created_at timestamp
-        updated_at timestamp
+    Payment {
+        int id PK
+        int reservation_id FK
+        decimal amount
+        string payment_method
+        string status
+        string transaction_id
+        timestamps timestamps
     }
-
-    FILM ||--o{ SCREENING : "has many"
-    SCREENING ||--o{ SEAT : "has many"
-    SCREENING ||--o{ RESERVATION : "has many"
-    USER ||--o{ RESERVATION : "has many"
-    RESERVATION ||--o{ RESERVATION_SEAT : "has many"
-    RESERVATION ||--o{ PAYMENT : "has many"
-    SEAT ||--o{ RESERVATION_SEAT : "belongs to many"
 ```
 
-## Controller Structure
+## Middleware Implementation
 
-The application follows RESTful controller patterns with specialized controllers for different domains:
+Middleware acts as a filtering mechanism for HTTP requests. The application uses both Laravel's built-in middleware and custom middleware:
 
-### Class Hierarchy
+### Key Middleware
+
+1. **Authentication Middleware**
+
+    - `auth`: Ensures the user is authenticated
+    - `auth:admin`: Ensures the user is authenticated as an admin
+
+2. **CSRF Protection**
+
+    - `web`: Applies CSRF protection to routes
+
+3. **Custom Middleware**
+    - `EnsureUserHasRole`: Checks if user has the required role to access a resource
+    - `HandleInertiaRequests`: Prepares shared data for Inertia requests
+
+## API Endpoints
+
+The application provides a RESTful API for various operations:
+
+### Film Endpoints
+
+- `GET /api/films`: List all films
+- `GET /api/films/{id}`: Get a specific film
+- `POST /api/films`: Create a new film (admin only)
+- `PUT /api/films/{id}`: Update a film (admin only)
+- `DELETE /api/films/{id}`: Delete a film (admin only)
+
+### Reservation Endpoints
+
+- `GET /api/reservations`: List user's reservations
+- `GET /api/reservations/{id}`: Get a specific reservation
+- `POST /api/reservations`: Create a new reservation
+- `PUT /api/reservations/{id}`: Update a reservation
+- `DELETE /api/reservations/{id}`: Cancel a reservation
+
+### Payment Endpoints
+
+- `POST /api/payments`: Process a payment
+- `GET /api/payments/{id}`: Get payment details
+
+## Form Validation
+
+Laravel's form request validation is used to validate incoming HTTP requests:
+
+```php
+// Example validation rules for creating a film
+public function rules(): array
+{
+    return [
+        'title' => 'required|string|max:255',
+        'description' => 'required|string',
+        'duration' => 'required|integer|min:1',
+        'release_date' => 'required|date',
+        'poster_url' => 'nullable|url|max:255',
+    ];
+}
+```
+
+Common validation patterns include:
+
+- Required fields
+- String length validation
+- Numeric range validation
+- Date format validation
+- Unique constraints for database fields
+- Custom validation rules
+
+## Service Classes and Helpers
+
+The application uses service classes to encapsulate business logic:
+
+### Key Services
+
+1. **ReservationService**
+
+    - Handles reservation creation, modification, and cancellation
+    - Manages seat availability and reservation status changes
+
+2. **PaymentService**
+
+    - Processes payments
+    - Integrates with payment gateways
+    - Handles payment status updates
+
+3. **PDFService**
+
+    - Generates PDF tickets for reservations
+    - Creates reports for administrators
+
+4. **NotificationService**
+    - Manages email notifications
+    - Sends confirmation emails and reminders
+
+## UML Diagrams
+
+### MVC Relationships
 
 ```mermaid
 classDiagram
     class Controller {
-        +__construct()
-    }
-
-    class FilmController {
-        +index(Request request)
-        +show(Film film)
-        +home()
-    }
-
-    class ReservationController {
-        +seatSelection(Screening screening)
-        +store(Request request, Screening screening)
-        +payment(Reservation reservation)
-        +processPayment(Request request, Reservation reservation)
-        +confirmation(Reservation reservation)
-        +downloadTicket(Reservation reservation)
-        +userReservations()
-        +show(Reservation reservation)
-    }
-
-    class AccountController {
         +index()
-        +settings()
-        +updateProfile(Request request)
-        +updatePassword(Request request)
+        +show(id)
+        +store(Request)
+        +update(Request, id)
+        +destroy(id)
     }
 
-    class AdminFilmController {
-        +index(Request request)
-        +create()
-        +store(Request request)
-        +edit(Film film)
-        +update(Request request, Film film)
-        +destroy(Film film)
+    class Model {
+        +fillable[]
+        +hidden[]
+        +casts[]
+        +relationships()
+        +scopeFilters()
     }
 
-    class AdminReservationController {
-        +index(Request request)
-        +show(Reservation reservation)
-        +updateStatus(Request request, Reservation reservation)
-        +destroy(Reservation reservation)
+    class Request {
+        +rules()
+        +authorize()
+        +messages()
     }
 
-    class ScreeningController {
-        +index(Request request)
-        +create()
-        +store(Request request)
-        +edit(Screening screening)
-        +update(Request request, Screening screening)
-        +destroy(Screening screening)
-        +filmScreenings(Film film)
-        +repairSeats(Screening screening)
+    class Service {
+        +execute()
+        +process()
     }
 
-    class AuthController {
-        +login()
-        +authenticate(Request request)
-        +logout(Request request)
-    }
-
-    Controller <|-- FilmController
-    Controller <|-- ReservationController
-    Controller <|-- AccountController
-    Controller <|-- AdminFilmController
-    Controller <|-- AdminReservationController
-    Controller <|-- ScreeningController
-    Controller <|-- AuthController
+    Controller --> Model: uses
+    Controller --> Request: validates with
+    Controller --> Service: delegates to
+    Service --> Model: manipulates
 ```
 
-## Authentication Flow
-
-The application uses Laravel's authentication system with multiple guards for different user roles:
-
-```mermaid
-graph TD
-    A[User Visits Login Page] --> B{Has Account?}
-    B -->|Yes| C[Enter Credentials]
-    B -->|No| D[Register New Account]
-    D --> E[Verify Email]
-    E --> C
-    C --> F{Valid Credentials?}
-    F -->|No| G[Show Error]
-    G --> C
-    F -->|Yes| H{User Role?}
-    H -->|Admin| I[Redirect to Admin Dashboard]
-    H -->|Client| J[Redirect to Client Dashboard]
-
-    style A fill:#f9f9f9,stroke:#333,stroke-width:1px
-    style B fill:#e6f7ff,stroke:#333,stroke-width:1px
-    style C fill:#f0f0f0,stroke:#333,stroke-width:1px
-    style F fill:#e6f7ff,stroke:#333,stroke-width:1px
-    style H fill:#e6f7ff,stroke:#333,stroke-width:1px
-    style I fill:#f0f0f0,stroke:#333,stroke-width:1px
-    style J fill:#f0f0f0,stroke:#333,stroke-width:1px
-```
-
-## Middleware Pipeline
-
-The application uses middleware to handle authentication, authorization, and other cross-cutting concerns:
-
-```mermaid
-graph LR
-    A[Client Request] --> B[HandleInertiaRequests]
-    B --> C{Route Group?}
-    C -->|Admin Routes| D[EnsureUserIsAdmin]
-    C -->|Client Routes| E[EnsureUserIsClient]
-    D --> F[Admin Controller]
-    E --> G[Client Controller]
-    F --> H[Response]
-    G --> H
-
-    style A fill:#f9f9f9,stroke:#333,stroke-width:1px
-    style B fill:#e6f7ff,stroke:#333,stroke-width:1px
-    style C fill:#f0f0f0,stroke:#333,stroke-width:1px
-    style D fill:#f5f5f5,stroke:#333,stroke-width:1px
-    style E fill:#f5f5f5,stroke:#333,stroke-width:1px
-    style F fill:#e6f7ff,stroke:#333,stroke-width:1px
-    style G fill:#e6f7ff,stroke:#333,stroke-width:1px
-    style H fill:#f9f9f9,stroke:#333,stroke-width:1px
-```
-
-## Reservation Flow
-
-The reservation process follows a multi-step flow with transaction handling:
+### Request Lifecycle
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant ReservationController
-    participant ScreeningModel
-    participant ReservationModel
-    participant PaymentModel
-    participant EmailNotification
+    participant Client
+    participant Router
+    participant Middleware
+    participant Controller
+    participant Service
+    participant Model
+    participant Database
 
-    User->>ReservationController: Select Screening
-    ReservationController->>ScreeningModel: Get Available Seats
-    ScreeningModel-->>ReservationController: Available Seats
-    ReservationController-->>User: Seat Selection UI
-
-    User->>ReservationController: Select Seats & Submit
-    ReservationController->>ReservationModel: Create Reservation
-    ReservationModel->>ReservationModel: Lock Selected Seats
-    ReservationModel-->>ReservationController: Reservation Created
-    ReservationController-->>User: Payment Page
-
-    User->>ReservationController: Submit Payment Details
-    ReservationController->>PaymentModel: Process Payment
-    PaymentModel-->>ReservationController: Payment Result
-
-    alt Payment Successful
-        ReservationController->>ReservationModel: Confirm Reservation
-        ReservationController->>EmailNotification: Send Confirmation
-        EmailNotification-->>User: Email with Tickets
-        ReservationController-->>User: Confirmation Page
-    else Payment Failed
-        ReservationController->>ReservationModel: Release Seats
-        ReservationController-->>User: Payment Failed Page
-    end
+    Client->>Router: HTTP Request
+    Router->>Middleware: Route matched
+    Middleware->>Middleware: Process middleware stack
+    Middleware->>Controller: Request validated
+    Controller->>Service: Delegate business logic
+    Service->>Model: Manipulate data
+    Model->>Database: Query/Update database
+    Database->>Model: Return results
+    Model->>Service: Return data
+    Service->>Controller: Return processed result
+    Controller->>Client: HTTP Response (JSON/Inertia)
 ```
 
-## Key Files and Their Responsibilities
+### Business Logic Flow
 
-### Models
+```mermaid
+flowchart TD
+    A[User Input] --> B{Validation}
+    B -->|Invalid| C[Return Error]
+    B -->|Valid| D[Controller]
 
-- **Film.php**: Manages film data with relationships to screenings and reservations
-- **Screening.php**: Handles screening schedules with seat availability tracking
-- **Seat.php**: Manages individual seats for screenings
-- **Reservation.php**: Handles booking data with payment processing
-- **User.php**: Manages user authentication and profile data
+    D --> E[Service Layer]
+    E --> F{Business Rules Check}
 
-### Controllers
+    F -->|Fails| G[Return Business Error]
+    F -->|Passes| H[Model Operations]
 
-- **FilmController.php**: Handles film listing and details for customers
-- **ReservationController.php**: Manages the reservation process flow
-- **Admin/FilmController.php**: Provides CRUD operations for films in admin area
-- **Admin/ScreeningController.php**: Manages screening schedules in admin area
-- **Admin/ReservationController.php**: Handles reservation management in admin area
+    H --> I[Database Transaction]
+    I -->|Success| J[Commit Changes]
+    I -->|Failure| K[Rollback]
 
-### Middleware
+    J --> L[Generate Response]
+    K --> M[Return Error]
 
-- **EnsureUserIsAdmin.php**: Protects admin routes from unauthorized access
-- **EnsureUserIsClient.php**: Ensures user has appropriate client role
-- **HandleInertiaRequests.php**: Prepares data for Inertia.js frontend
+    L --> N[Return Success Response]
+```
 
-## API Endpoints
+## Authentication and Authorization
 
-The application provides API endpoints for internal use by the frontend:
+### Authentication
 
-### Film Endpoints
+- Laravel Sanctum is used for authentication
+- Session-based authentication for web requests
+- Token-based authentication for API requests
 
-- `GET /api/films`: Get list of films with pagination
-- `GET /api/films/{id}`: Get details of a specific film
-- `POST /api/films` (Admin): Create a new film
-- `PUT /api/films/{id}` (Admin): Update film details
-- `DELETE /api/films/{id}` (Admin): Delete a film
+### Authorization
 
-### Screening Endpoints
-
-- `GET /api/screenings`: Get list of screenings
-- `GET /api/films/{id}/screenings`: Get screenings for a specific film
-- `GET /api/screenings/{id}/seats`: Get seat availability for a screening
-- `POST /api/screenings` (Admin): Create a new screening
-- `PUT /api/screenings/{id}` (Admin): Update screening details
-
-### Reservation Endpoints
-
-- `POST /api/reservations`: Create a new reservation
-- `GET /api/reservations/{code}`: Get reservation details by confirmation code
-- `GET /api/user/reservations`: Get all reservations for the authenticated user
-- `POST /api/reservations/{id}/payment`: Process payment for a reservation
-
-## Security Considerations
-
-The backend implements these security measures:
-
-1. **Authentication**: Laravel's secure authentication system
-2. **Authorization**: Policy-based access control for resources
-3. **CSRF Protection**: Cross-site request forgery protection
-4. **Validation**: Input validation using Form Request classes
-5. **Database**: Parameterized queries to prevent SQL injection
-6. **Sessions**: Secure session handling with regeneration
-7. **File Uploads**: Validation of uploaded files and secure storage
+- Role-based access control using Laravel's Gate and Policy features
+- Admin and regular user roles with different permissions
+- Authorization logic encapsulated in Policy classes
 
 ## Error Handling
 
-The application uses Laravel's exception handling system with customized responses:
+- Global exception handler customizes error responses
+- API errors return appropriate HTTP status codes and JSON responses
+- Validation errors are returned in a consistent format
+- Inertia.js error handling for frontend errors
 
-1. **Validation Errors**: Returned as structured JSON for API requests
-2. **Authentication Errors**: Redirect to login or return 401 responses
-3. **Authorization Errors**: Return 403 responses with appropriate messages
-4. **Not Found Errors**: Return 404 responses or redirect to fallback routes
-5. **Server Errors**: Logged for debugging and generic error shown to users
+## Testing
 
-## Database Transactions
+The backend includes comprehensive testing using PHPUnit:
 
-Critical operations are wrapped in database transactions to ensure data integrity:
+- Feature tests for testing HTTP endpoints
+- Unit tests for testing individual components
+- Database tests for testing database interactions
+- Mocking external services for isolated testing
 
-1. **Reservation Creation**: Seats reservation and payment processing
-2. **Screening Management**: Seat creation and management
-3. **User Registration**: User creation and initial settings
+## Deployment and Performance
 
-## Performance Optimizations
+- Database query optimization with eager loading
+- Caching strategy for frequently accessed data
+- Queue system for background processing
+- Proper indexes on database tables
 
-The application implements these performance optimizations:
+## Best Practices
 
-1. **Eager Loading**: Avoid N+1 query issues with relationships
-2. **Caching**: Cache frequently accessed data like film listings
-3. **Pagination**: Paginate large result sets
-4. **Indexing**: Database indexes on frequently queried columns
-5. **Query Optimization**: Optimized queries for performance
+1. **Single Responsibility Principle**: Each class has a single responsibility
+2. **Dependency Injection**: Dependencies are injected rather than created
+3. **Fat Models, Skinny Controllers**: Business logic is kept in models or services
+4. **Validation**: All input is validated before processing
+5. **Service Layer**: Complex business logic is encapsulated in service classes
+6. **Database Transactions**: Used for operations that require multiple database changes
 
-## Admin Features
-
-The admin area provides these management capabilities:
-
-1. **Dashboard**: Overview with key metrics and statistics
-2. **Film Management**: CRUD operations for films
-3. **Screening Management**: Schedule management with seat setup
-4. **Reservation Management**: View, update, and cancel reservations
-5. **Report Generation**: Box office, revenue, and attendance reports
-
-## Conclusion
-
-The backend architecture provides a robust foundation for the cinema management system with a focus on security, performance, and maintainability. The MVC design pattern with clear separation of concerns allows for easy extension and modification as requirements evolve.
+This documentation provides a comprehensive overview of the backend architecture of the Cinema System Management application. It details the structure, patterns, and best practices used in the codebase to help developers understand and contribute to the project effectively.

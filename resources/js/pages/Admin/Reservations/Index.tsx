@@ -1,11 +1,12 @@
-import { Pagination } from '@/components/ui/pagination';
 import DeletePopup from '@/components/ui/DeletePopup';
 import MotionLink from '@/components/ui/motion-link';
+import { Pagination } from '@/components/ui/pagination';
 import AdminLayout from '@/layouts/AdminLayout';
-import { CalendarIcon, CreditCardIcon, EyeIcon, FilmIcon, MagnifyingGlassIcon, TicketIcon, TrashIcon, UserIcon } from '@heroicons/react/24/outline';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { CalendarIcon, EyeIcon, FilmIcon, TicketIcon, TrashIcon, UserIcon } from '@heroicons/react/24/outline';
+import { Head, router, useForm } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import React, { useState } from 'react';
+import { formatCurrency, formatShortDate, formatTime } from '../../../utils/dateUtils';
 
 interface Film {
     id: number;
@@ -75,9 +76,9 @@ const containerVariants = {
     visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.05
-        }
-    }
+            staggerChildren: 0.05,
+        },
+    },
 };
 
 const itemVariants = {
@@ -86,11 +87,11 @@ const itemVariants = {
         opacity: 1,
         y: 0,
         transition: {
-            type: "spring",
+            type: 'spring',
             stiffness: 300,
-            damping: 24
-        }
-    }
+            damping: 24,
+        },
+    },
 };
 
 export default function Index({ reservations, films, screenings, filters, statuses }: Props) {
@@ -113,7 +114,7 @@ export default function Index({ reservations, films, screenings, filters, status
             film_id: data.film_id,
             screening_id: data.screening_id,
             status: data.status,
-            date: data.date
+            date: data.date,
         };
 
         if (JSON.stringify(filters) !== JSON.stringify(currentFilters)) {
@@ -166,44 +167,6 @@ export default function Index({ reservations, films, screenings, filters, status
             preserveState: true,
             replace: true,
         });
-    };
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
-    const formatTime = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
-
-    const formatCurrency = (amount: number | null | undefined) => {
-        if (amount === null || amount === undefined || isNaN(amount)) {
-            return '$0.00';
-        }
-
-        // Convert to number if it's a string and ensure it's a valid number
-        const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-
-        if (isNaN(numericAmount)) {
-            return '$0.00';
-        }
-
-        // Format with 2 decimal places
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(numericAmount);
     };
 
     const handleDelete = (reservation: Reservation) => {
@@ -289,10 +252,7 @@ export default function Index({ reservations, films, screenings, filters, status
                 transition={{ duration: 0.3 }}
             >
                 <div className="flex items-center">
-                    <motion.div
-                        whileHover={{ rotate: 10 }}
-                        className="flex items-center justify-center w-10 h-10 mr-2 rounded-lg bg-primary/10"
-                    >
+                    <motion.div whileHover={{ rotate: 10 }} className="flex items-center justify-center w-10 h-10 mr-2 rounded-lg bg-primary/10">
                         <TicketIcon className="w-6 h-6 text-primary" />
                     </motion.div>
                     <div>
@@ -303,12 +263,7 @@ export default function Index({ reservations, films, screenings, filters, status
             </motion.div>
 
             {/* Filters */}
-            <motion.div
-                className="mb-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1, duration: 0.5 }}
-            >
+            <motion.div className="mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1, duration: 0.5 }}>
                 <form onSubmit={handleSearch} className="p-4 space-y-4 border rounded-lg shadow-sm bg-card border-border">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                         <div>
@@ -343,10 +298,10 @@ export default function Index({ reservations, films, screenings, filters, status
                             >
                                 <option value="">All Screenings</option>
                                 {screenings
-                                    .filter(s => !data.film_id || (s.id && data.film_id))
+                                    .filter((s) => !data.film_id || (s.id && data.film_id))
                                     .map((screening) => (
                                         <option key={screening.id} value={screening.id}>
-                                            {formatDate(screening.start_time)} {formatTime(screening.start_time)}
+                                            {formatShortDate(screening.start_time)} {formatTime(screening.start_time)}
                                         </option>
                                     ))}
                             </select>
@@ -392,7 +347,7 @@ export default function Index({ reservations, films, screenings, filters, status
                                 whileTap={{ scale: 0.95 }}
                                 type="button"
                                 onClick={handleClearFilters}
-                                className="px-4 py-2 text-sm font-medium transition border rounded-md border-border hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                className="px-4 py-2 text-sm font-medium transition border rounded-md border-border hover:bg-muted focus:ring-primary/30 focus:ring-2 focus:outline-none"
                             >
                                 Clear Filters
                             </motion.button>
@@ -446,8 +401,11 @@ export default function Index({ reservations, films, screenings, filters, status
                                     >
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
-                                                <div className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 ${reservation.user ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-                                                    }`}>
+                                                <div
+                                                    className={`mr-3 flex h-8 w-8 items-center justify-center rounded-full ${
+                                                        reservation.user ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                                                    }`}
+                                                >
                                                     <UserIcon className="w-4 h-4" />
                                                 </div>
                                                 <div>
@@ -467,31 +425,33 @@ export default function Index({ reservations, films, screenings, filters, status
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-foreground">{formatDate(reservation.screening.start_time)}</div>
+                                            <div className="text-sm text-foreground">{formatShortDate(reservation.screening.start_time)}</div>
                                             <div className="flex items-center text-xs text-muted-foreground">
                                                 <CalendarIcon className="w-3 h-3 mr-1" />
                                                 {formatTime(reservation.screening.start_time)}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-foreground whitespace-nowrap">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                                            <span className="bg-primary/10 text-primary inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
                                                 {reservation.seats_count} {reservation.seats_count === 1 ? 'seat' : 'seats'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-foreground">
-                                                {formatCurrency(reservation.total_price)}
-                                            </div>
+                                            <div className="text-sm font-medium text-foreground">{formatCurrency(reservation.total_price)}</div>
                                             {reservation.payment && (
                                                 <div className="flex items-center mt-1">
-                                                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${getPaymentStatusBadgeClass(reservation.payment)}`}>
+                                                    <span
+                                                        className={`inline-flex rounded-full px-2 py-0.5 text-xs ${getPaymentStatusBadgeClass(reservation.payment)}`}
+                                                    >
                                                         {reservation.payment.status}
                                                     </span>
                                                 </div>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeClass(reservation.status)}`}>
+                                            <span
+                                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeClass(reservation.status)}`}
+                                            >
                                                 {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
                                             </span>
                                         </td>
@@ -551,11 +511,7 @@ export default function Index({ reservations, films, screenings, filters, status
                         to <span className="mx-1 font-medium">{Math.min(reservations.current_page * 15, reservations.total)}</span>
                         of <span className="mx-1 font-medium">{reservations.total}</span> reservations
                     </div>
-                    <Pagination
-                        links={reservations.links}
-                        currentPage={reservations.current_page}
-                        totalPages={reservations.last_page}
-                    />
+                    <Pagination links={reservations.links} currentPage={reservations.current_page} totalPages={reservations.last_page} />
                 </motion.div>
             )}
 
@@ -566,9 +522,10 @@ export default function Index({ reservations, films, screenings, filters, status
                 onDelete={confirmDelete}
                 title="Cancel Reservation"
                 itemName={deletingReservation?.screening.film.title}
-                description={deletingReservation ?
-                    `Are you sure you want to cancel this reservation for {itemName} on ${formatDate(deletingReservation.screening.start_time)}? This action cannot be undone and all seats will be released.` :
-                    "Are you sure you want to cancel this reservation? This action cannot be undone."
+                description={
+                    deletingReservation
+                        ? `Are you sure you want to cancel this reservation for {itemName} on ${formatShortDate(deletingReservation.screening.start_time)}? This action cannot be undone and all seats will be released.`
+                        : 'Are you sure you want to cancel this reservation? This action cannot be undone.'
                 }
                 processing={isProcessingDelete}
             />

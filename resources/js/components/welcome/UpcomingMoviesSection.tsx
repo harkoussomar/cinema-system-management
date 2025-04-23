@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
+import { formatReleaseDate } from '@/utils/dateUtils';
 import { fetchUpcomingMovies, getImageUrl } from '@/utils/tmdbApi';
+import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useInView } from 'react-intersection-observer';
 
 interface Movie {
     id: string;
@@ -42,7 +43,7 @@ const UpcomingMoviesSection = () => {
         getUpcomingMovies();
     }, []);
 
-    // Animation variants
+    // Simplified animation variants - using only opacity for safer animations
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -54,24 +55,13 @@ const UpcomingMoviesSection = () => {
     };
 
     const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
+        hidden: { opacity: 0 },
         visible: {
-            y: 0,
             opacity: 1,
             transition: {
                 duration: 0.5,
             },
         },
-    };
-
-    // Format release date for display
-    const formatReleaseDate = (dateString: string) => {
-        try {
-            const year = dateString.split('-')[0];
-            return year;
-        } catch (e) {
-            return 'Coming Soon';
-        }
     };
 
     // Truncate text and add ellipsis
@@ -89,13 +79,13 @@ const UpcomingMoviesSection = () => {
                 </div>
 
                 <p className="max-w-3xl mb-10 text-lg text-white/80">
-                    Get a sneak peek at the most anticipated films coming soon to CineVerse.
-                    Be the first to experience these blockbusters on our premium screens.
+                    Get a sneak peek at the most anticipated films coming soon to CineVerse. Be the first to experience these blockbusters on our
+                    premium screens.
                 </p>
 
                 {loading && (
                     <div className="flex items-center justify-center py-20">
-                        <div className="w-12 h-12 border-4 border-t-primary border-white/20 rounded-full animate-spin" />
+                        <div className="w-12 h-12 border-4 rounded-full border-t-primary animate-spin border-white/20" />
                     </div>
                 )}
 
@@ -104,7 +94,7 @@ const UpcomingMoviesSection = () => {
                         <p className="mb-4 text-red-400">{error}</p>
                         <button
                             onClick={getUpcomingMovies}
-                            className="px-4 py-2 text-sm font-medium transition-colors rounded-md bg-primary text-white hover:bg-primary/90"
+                            className="px-4 py-2 text-sm font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary/90"
                         >
                             Try Again
                         </button>
@@ -116,7 +106,7 @@ const UpcomingMoviesSection = () => {
                         <p className="mb-4 text-yellow-400">No upcoming movies found at this time.</p>
                         <button
                             onClick={getUpcomingMovies}
-                            className="px-4 py-2 text-sm font-medium transition-colors rounded-md bg-primary text-white hover:bg-primary/90"
+                            className="px-4 py-2 text-sm font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary/90"
                         >
                             Refresh
                         </button>
@@ -127,14 +117,16 @@ const UpcomingMoviesSection = () => {
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
-                        animate={inView ? "visible" : "hidden"}
+                        animate={inView ? 'visible' : 'hidden'}
                         className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
                     >
                         {upcomingMovies.map((movie) => (
                             <motion.div
                                 key={movie.id}
                                 variants={itemVariants}
-                                className="overflow-hidden transition-transform duration-300 transform rounded-lg shadow-lg hover:scale-105 bg-black/40 backdrop-blur-sm"
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ duration: 0.3 }}
+                                className="overflow-hidden rounded-lg shadow-lg bg-black/40 backdrop-blur-sm"
                             >
                                 <div className="relative aspect-[2/3]">
                                     <img
@@ -155,16 +147,17 @@ const UpcomingMoviesSection = () => {
                                     <h3 className="mb-2 text-xl font-bold text-white">{movie.title}</h3>
                                     {movie.genre && (
                                         <div className="flex flex-wrap gap-2 mb-2">
-                                            {movie.genre.split(',').slice(0, 3).map((genre, index) => (
-                                                <span key={index} className="px-2 py-1 text-xs rounded-full bg-white/10 text-white/70">
-                                                    {genre.trim()}
-                                                </span>
-                                            ))}
+                                            {movie.genre
+                                                .split(',')
+                                                .slice(0, 3)
+                                                .map((genre, index) => (
+                                                    <span key={index} className="px-2 py-1 text-xs rounded-full bg-white/10 text-white/70">
+                                                        {genre.trim()}
+                                                    </span>
+                                                ))}
                                         </div>
                                     )}
-                                    <p className="mb-4 text-sm text-white/70">
-                                        {truncateText(movie.overview || '', 120)}
-                                    </p>
+                                    <p className="mb-4 text-sm text-white/70">{truncateText(movie.overview || '', 120)}</p>
                                     {movie.director && (
                                         <p className="mb-3 text-xs text-white/60">
                                             <span className="font-medium">Director:</span> {movie.director}

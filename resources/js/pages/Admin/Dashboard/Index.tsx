@@ -1,4 +1,6 @@
 import AdminLayout from '@/layouts/AdminLayout';
+import { Head, Link } from '@inertiajs/react';
+import { motion } from 'framer-motion';
 import {
     ArrowDownCircle as ArrowDownCircleIcon,
     ArrowUpCircle as ArrowUpCircleIcon,
@@ -10,10 +12,9 @@ import {
     Ticket as TicketIcon,
     User as UserIcon,
 } from 'lucide-react';
-import { Head, Link } from '@inertiajs/react';
-import Chart from 'chart.js/auto';
-import { motion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { useBarChart, useRevenueChart } from '../../../utils/chartHooks';
+import { formatCurrency, formatShortDate, formatTime } from '../../../utils/dateUtils';
 
 interface DashboardProps {
     stats: {
@@ -71,9 +72,9 @@ const containerVariants = {
     visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.1
-        }
-    }
+            staggerChildren: 0.1,
+        },
+    },
 };
 
 const itemVariants = {
@@ -82,183 +83,38 @@ const itemVariants = {
         opacity: 1,
         y: 0,
         transition: {
-            type: "spring",
+            type: 'spring',
             stiffness: 300,
-            damping: 24
-        }
-    }
+            damping: 24,
+        },
+    },
 };
 
 export default function Dashboard({ stats, upcomingScreenings, recentReservations, popularFilms }: DashboardProps) {
     const popularFilmsChartRef = useRef<HTMLCanvasElement>(null);
     const revenueChartRef = useRef<HTMLCanvasElement>(null);
 
-    useEffect(() => {
-        // Popular Films Chart
-        if (popularFilmsChartRef.current) {
-            const ctx = popularFilmsChartRef.current.getContext('2d');
-            if (ctx) {
-                const chart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: popularFilms.map((film) => (film.title.length > 15 ? film.title.substring(0, 15) + '...' : film.title)),
-                        datasets: [
-                            {
-                                label: 'Reservations',
-                                data: popularFilms.map((film) => film.reservations_count),
-                                backgroundColor: 'rgba(79, 70, 229, 0.7)',
-                                borderColor: 'rgba(79, 70, 229, 1)',
-                                borderWidth: 1,
-                                borderRadius: 6,
-                                barThickness: 20,
-                            },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false,
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    title: (tooltipItems) => {
-                                        const index = tooltipItems[0].dataIndex;
-                                        return popularFilms[index].title;
-                                    },
-                                },
-                            },
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    display: true,
-                                    color: 'rgba(0, 0, 0, 0.05)',
-                                },
-                                ticks: {
-                                    precision: 0,
-                                },
-                            },
-                            x: {
-                                grid: {
-                                    display: false,
-                                },
-                            },
-                        },
-                    },
-                });
+    // Use custom hooks for chart initialization
+    useBarChart(popularFilmsChartRef, {
+        labels: popularFilms.map((film) => (film.title.length > 15 ? film.title.substring(0, 15) + '...' : film.title)),
+        values: popularFilms.map((film) => film.reservations_count),
+    });
 
-                return () => {
-                    chart.destroy();
-                };
-            }
-        }
-    }, [popularFilms]);
+    // Mock data for revenue chart - in a real app this would come from the backend
+    const monthlyRevenue = [
+        { month: 'Jan', revenue: stats.revenue * 0.4 },
+        { month: 'Feb', revenue: stats.revenue * 0.5 },
+        { month: 'Mar', revenue: stats.revenue * 0.7 },
+        { month: 'Apr', revenue: stats.revenue * 0.6 },
+        { month: 'May', revenue: stats.revenue * 0.8 },
+        { month: 'Jun', revenue: stats.revenue * 0.9 },
+        { month: 'Jul', revenue: stats.revenue * 1.0 },
+    ];
 
-    useEffect(() => {
-        // Monthly Revenue Chart (Mockup data)
-        if (revenueChartRef.current) {
-            const ctx = revenueChartRef.current.getContext('2d');
-            if (ctx) {
-                // Mock data - in a real app this would come from the backend
-                const monthlyRevenue = [
-                    { month: 'Jan', revenue: stats.revenue * 0.4 },
-                    { month: 'Feb', revenue: stats.revenue * 0.5 },
-                    { month: 'Mar', revenue: stats.revenue * 0.7 },
-                    { month: 'Apr', revenue: stats.revenue * 0.6 },
-                    { month: 'May', revenue: stats.revenue * 0.8 },
-                    { month: 'Jun', revenue: stats.revenue * 0.9 },
-                    { month: 'Jul', revenue: stats.revenue * 1.0 },
-                ];
-
-                const chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: monthlyRevenue.map((item) => item.month),
-                        datasets: [
-                            {
-                                label: 'Revenue',
-                                data: monthlyRevenue.map((item) => item.revenue),
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                borderColor: 'rgba(16, 185, 129, 1)',
-                                borderWidth: 2,
-                                tension: 0.3,
-                                fill: true,
-                                pointBackgroundColor: 'rgba(16, 185, 129, 1)',
-                                pointRadius: 4,
-                            },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false,
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: (context: { raw: number }) => {
-                                        return `Revenue: $${context.raw.toFixed(2)}`;
-                                    },
-                                },
-                            },
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    display: true,
-                                    color: 'rgba(0, 0, 0, 0.05)',
-                                },
-                                ticks: {
-                                    callback: function (value) {
-                                        return '$' + value.toLocaleString();
-                                    },
-                                },
-                            },
-                            x: {
-                                grid: {
-                                    display: false,
-                                },
-                            },
-                        },
-                    },
-                });
-
-                return () => {
-                    chart.destroy();
-                };
-            }
-        }
-    }, [stats.revenue]);
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-        }).format(amount);
-    };
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
-    const formatTime = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
+    useRevenueChart(revenueChartRef, {
+        labels: monthlyRevenue.map((item) => item.month),
+        values: monthlyRevenue.map((item) => item.revenue),
+    });
 
     const getStatusBadgeClass = (status: string) => {
         switch (status) {
@@ -442,8 +298,8 @@ export default function Dashboard({ stats, upcomingScreenings, recentReservation
                         </h3>
                         <motion.div whileHover={{ x: 2 }}>
                             <Link href={route('admin.reports.films')} className="text-sm font-medium text-primary hover:text-primary/90">
-                            View Report
-                        </Link>
+                                View Report
+                            </Link>
                         </motion.div>
                     </div>
                     <div className="p-6">
@@ -465,8 +321,8 @@ export default function Dashboard({ stats, upcomingScreenings, recentReservation
                         </h3>
                         <motion.div whileHover={{ x: 2 }}>
                             <Link href={route('admin.reports.revenue')} className="text-sm font-medium text-primary hover:text-primary/90">
-                            View Report
-                        </Link>
+                                View Report
+                            </Link>
                         </motion.div>
                     </div>
                     <div className="p-6">
@@ -496,8 +352,8 @@ export default function Dashboard({ stats, upcomingScreenings, recentReservation
                         </h3>
                         <motion.div whileHover={{ x: 2 }}>
                             <Link href={route('admin.reservations.index')} className="text-sm font-medium text-primary hover:text-primary/90">
-                            View All
-                        </Link>
+                                View All
+                            </Link>
                         </motion.div>
                     </div>
                     <div className="divide-y divide-border">
@@ -513,7 +369,9 @@ export default function Dashboard({ stats, upcomingScreenings, recentReservation
                                     <div className="px-6 py-4">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center space-x-4">
-                                                <div className={`h-9 w-9 flex items-center justify-center rounded-full ${getStatusBadgeClass(reservation.status).replace('text-', 'bg-').replace('/20', '/10')}`}>
+                                                <div
+                                                    className={`flex h-9 w-9 items-center justify-center rounded-full ${getStatusBadgeClass(reservation.status).replace('text-', 'bg-').replace('/20', '/10')}`}
+                                                >
                                                     <UserIcon className={`h-4 w-4 ${getStatusBadgeClass(reservation.status)}`} />
                                                 </div>
                                                 <div>
@@ -523,7 +381,7 @@ export default function Dashboard({ stats, upcomingScreenings, recentReservation
                                                     <div className="flex items-center mt-1 space-x-2 text-xs text-muted-foreground">
                                                         <span>{reservation.reservation_code}</span>
                                                         <span className="w-1 h-1 rounded-full bg-muted-foreground"></span>
-                                                        <span>{formatDate(reservation.created_at)}</span>
+                                                        <span>{formatShortDate(reservation.created_at)}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -532,7 +390,9 @@ export default function Dashboard({ stats, upcomingScreenings, recentReservation
                                                 <div className="flex items-center justify-end mt-1 space-x-1 text-xs">
                                                     <ClockIcon className="w-3 h-3 text-muted-foreground" />
                                                     <span className="text-muted-foreground">{formatTime(reservation.screening.start_time)}</span>
-                                                    <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${getStatusBadgeClass(reservation.status)}`}>
+                                                    <span
+                                                        className={`ml-2 rounded-full px-2 py-0.5 text-xs ${getStatusBadgeClass(reservation.status)}`}
+                                                    >
                                                         {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
                                                     </span>
                                                 </div>
@@ -560,8 +420,8 @@ export default function Dashboard({ stats, upcomingScreenings, recentReservation
                         </h3>
                         <motion.div whileHover={{ x: 2 }}>
                             <Link href={route('admin.screenings.index')} className="text-sm font-medium text-primary hover:text-primary/90">
-                            View All
-                        </Link>
+                                View All
+                            </Link>
                         </motion.div>
                     </div>
                     <div className="px-6 py-4">
@@ -573,16 +433,14 @@ export default function Dashboard({ stats, upcomingScreenings, recentReservation
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.1 * index }}
-                                        className="px-2 py-3 -mx-2 transition-colors rounded-md first:pt-0 last:pb-0 hover:bg-muted/10"
+                                        className="px-2 py-3 -mx-2 transition-colors rounded-md hover:bg-muted/10 first:pt-0 last:pb-0"
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="min-w-0">
                                                 <p className="text-sm font-medium truncate text-foreground">{screening.film.title}</p>
                                                 <div className="flex items-center mt-1 space-x-1">
                                                     <ClockIcon className="w-3 h-3 text-muted-foreground" />
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {formatTime(screening.start_time)}
-                                                    </span>
+                                                    <span className="text-xs text-muted-foreground">{formatTime(screening.start_time)}</span>
                                                 </div>
                                             </div>
                                             <div className="ml-4">
@@ -590,7 +448,7 @@ export default function Dashboard({ stats, upcomingScreenings, recentReservation
                                                     {screening.room}
                                                 </span>
                                             </div>
-                                    </div>
+                                        </div>
                                     </motion.div>
                                 ))
                             ) : (

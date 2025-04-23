@@ -1,28 +1,33 @@
 import { Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 
-const HeroSection = () => {
+const HeroSection = memo(() => {
     const [scrollY, setScrollY] = useState(0);
     const videoRef = useRef<HTMLVideoElement>(null);
 
-    // Parallax effect
+    // Parallax effect with throttling
     useEffect(() => {
+        let ticking = false;
+
         const handleScroll = () => {
-            setScrollY(window.scrollY);
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    setScrollY(window.scrollY);
+                    ticking = false;
+                });
+                ticking = true;
+            }
         };
 
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     // Add smooth scroll behavior to document
     useEffect(() => {
-        // Apply smooth scrolling to the document
         document.documentElement.style.scrollBehavior = 'smooth';
-
-        // Clean up
         return () => {
             document.documentElement.style.scrollBehavior = '';
         };
@@ -30,44 +35,42 @@ const HeroSection = () => {
 
     // Handle scroll to next section
     const handleScrollToNextSection = () => {
-        // Target the first section after hero (FeaturedFilmsSection)
         const featuredSection = document.getElementById('featured');
         if (featuredSection) {
             featuredSection.scrollIntoView();
         } else {
-            // If no ID found, scroll to an approximate position
             const heroHeight = window.innerHeight;
             window.scrollTo({
                 top: heroHeight,
-                behavior: 'smooth'
+                behavior: 'smooth',
             });
         }
     };
 
-    // Custom hooks for section animations
+    // Custom hooks for section animations - use larger threshold for better performance
     const [heroRef, heroInView] = useInView({
-        triggerOnce: false,
+        triggerOnce: true,
         threshold: 0.1,
     });
 
     // Video background control
     const playVideo = () => {
         if (videoRef.current) {
-            videoRef.current.play();
+            videoRef.current.play().catch((e) => console.log('Video autoplay prevented by browser'));
         }
     };
 
-    // Cinematic animated text effect
+    // Simpler text animation variants
     const textVariants = {
         hidden: { opacity: 0 },
         visible: (i: number) => ({
             opacity: 1,
-            transition: { delay: i * 0.1, duration: 0.8 },
+            transition: { delay: i * 0.1, duration: 0.5 },
         }),
     };
 
     return (
-        <section ref={heroRef} className="relative h-screen overflow-hidden" style={{ perspective: '1000px' }}>
+        <section ref={heroRef} className="relative h-screen overflow-hidden">
             {/* Cinema video backdrop */}
             <div className="absolute inset-0 z-0">
                 <video
@@ -89,7 +92,7 @@ const HeroSection = () => {
             <div
                 className="relative z-10 flex flex-col items-start justify-center h-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8"
                 style={{
-                    transform: `translateY(${scrollY * 0.2}px)`,
+                    transform: `translateY(${scrollY * 0.1}px)`,
                 }}
             >
                 <motion.div initial="hidden" animate={heroInView ? 'visible' : 'hidden'} className="max-w-4xl">
@@ -100,11 +103,7 @@ const HeroSection = () => {
                         </motion.span>
                     </div>
 
-                    <motion.h1
-                        custom={2}
-                        variants={textVariants}
-                        className="text-5xl font-bold tracking-tight text-white md:text-6xl lg:text-7xl"
-                    >
+                    <motion.h1 custom={2} variants={textVariants} className="text-5xl font-bold tracking-tight text-white md:text-6xl lg:text-7xl">
                         Where Stories
                         <span className="relative inline-block px-2 py-1 ml-2">
                             <span className="relative z-10">Come Alive</span>
@@ -112,14 +111,14 @@ const HeroSection = () => {
                                 className="absolute left-0 w-full h-full bg-primary/30 -bottom-0 -z-10"
                                 initial={{ width: 0 }}
                                 animate={{ width: '100%' }}
-                                transition={{ delay: 0.8, duration: 0.8 }}
+                                transition={{ delay: 0.5, duration: 0.5 }}
                             />
                         </span>
                     </motion.h1>
 
                     <motion.p custom={3} variants={textVariants} className="max-w-2xl mt-6 text-lg font-light text-white/80 md:text-xl">
-                        Immerse yourself in extraordinary worlds where imagination meets reality. Experience cinema like never before with our
-                        premium viewing experience, luxurious seating, and immersive sound technology.
+                        Immerse yourself in extraordinary worlds where imagination meets reality. Experience cinema like never before with our premium
+                        viewing experience, luxurious seating, and immersive sound technology.
                     </motion.p>
 
                     <motion.div custom={4} variants={textVariants} className="flex flex-wrap gap-6 mt-10">
@@ -138,12 +137,6 @@ const HeroSection = () => {
                                 </svg>
                                 Browse Movies
                             </span>
-                            <motion.span
-                                className="absolute inset-0 -z-10 bg-white/20"
-                                initial={{ x: '-100%', opacity: 0 }}
-                                whileHover={{ x: '100%', opacity: 0.3 }}
-                                transition={{ duration: 0.5 }}
-                            />
                         </Link>
 
                         <Link
@@ -161,29 +154,15 @@ const HeroSection = () => {
                                 </svg>
                                 Recommended Films
                             </span>
-                            <motion.span
-                                className="absolute inset-0 -z-10 bg-white/10"
-                                initial={{ scale: 0, opacity: 0 }}
-                                whileHover={{ scale: 1, opacity: 1 }}
-                                transition={{ duration: 0.4 }}
-                            />
                         </Link>
                     </motion.div>
                 </motion.div>
             </div>
 
-            {/* Dynamic scroll indicator - converted to button */}
-            <motion.button
+            {/* Simplified scroll indicator with reduced animation */}
+            <button
                 onClick={handleScrollToNextSection}
-                animate={{
-                    y: [0, 10, 0],
-                    opacity: [0.8, 0.4, 0.8],
-                }}
-                transition={{
-                    repeat: Infinity,
-                    duration: 2,
-                }}
-                className="absolute z-10 p-2 transform -translate-x-1/2 border-none outline-none cursor-pointer bottom-30 left-1/2 focus:outline-none focus:ring-0 focus:border-0 active:outline-none"
+                className="absolute z-10 p-2 transform -translate-x-1/2 border-none outline-none cursor-pointer bottom-30 left-1/2 focus:border-0 focus:ring-0 focus:outline-none active:outline-none"
                 aria-label="Scroll to next section"
                 style={{ WebkitTapHighlightColor: 'transparent', outlineColor: 'transparent' }}
             >
@@ -193,9 +172,9 @@ const HeroSection = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
                     </svg>
                 </div>
-            </motion.button>
+            </button>
         </section>
     );
-};
+});
 
 export default HeroSection;

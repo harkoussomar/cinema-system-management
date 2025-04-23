@@ -1,12 +1,12 @@
-import ClientLayout from '@/layouts/ClientLayout';
-import { Head } from '@inertiajs/react';
-import HeroSection from '@/components/welcome/HeroSection';
-import FeaturedFilmsSection from '@/components/welcome/FeaturedFilmsSection';
-import LatestFilmsSection from '@/components/welcome/LatestFilmsSection';
-import UpcomingMoviesSection from '@/components/welcome/UpcomingMoviesSection';
 import CinemaExperienceSection from '@/components/welcome/CinemaExperienceSection';
 import CinemaLocationsSection from '@/components/welcome/CinemaLocationsSection';
 import CtaSection from '@/components/welcome/CtaSection';
+import FeaturedFilmsSection from '@/components/welcome/FeaturedFilmsSection';
+import HeroSection from '@/components/welcome/HeroSection';
+import LatestFilmsSection from '@/components/welcome/LatestFilmsSection';
+import UpcomingMoviesSection from '@/components/welcome/UpcomingMoviesSection';
+import ClientLayout from '@/layouts/ClientLayout';
+import { Head } from '@inertiajs/react';
 
 interface Film {
     id: number;

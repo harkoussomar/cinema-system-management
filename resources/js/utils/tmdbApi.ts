@@ -113,30 +113,35 @@ export const fetchUpcomingMovies = async () => {
 
         // Fetch multiple movies in parallel
         const moviePromises = UPCOMING_MOVIES.map(async (title) => {
-            const response = await fetch(`${BASE_URL}/?apikey=${API_KEY}&t=${encodeURIComponent(title)}&plot=short`);
+            try {
+                const response = await fetch(`${BASE_URL}/?apikey=${API_KEY}&t=${encodeURIComponent(title)}&plot=short`);
 
-            if (!response.ok) {
-                throw new Error(`Failed to fetch movie: ${title}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch movie: ${title} - Status: ${response.status}`);
+                }
+
+                const movie = await response.json();
+
+                if (movie.Response === 'False') {
+                    console.error(`Movie not found: ${title}`);
+                    return null;
+                }
+
+                // Transform the data to match our interface
+                return {
+                    id: movie.imdbID,
+                    title: movie.Title,
+                    poster_path: movie.Poster,
+                    release_date: movie.Year + '-01-01', // OMDb only gives year for most movies
+                    overview: movie.Plot,
+                    director: movie.Director,
+                    genre: movie.Genre,
+                    runtime: movie.Runtime,
+                };
+            } catch (error) {
+                console.error(`Error fetching movie "${title}":`, error);
+                return null; // Skip this movie on error
             }
-
-            const movie = await response.json();
-
-            if (movie.Response === 'False') {
-                console.error(`Movie not found: ${title}`);
-                return null;
-            }
-
-            // Transform the data to match our interface
-            return {
-                id: movie.imdbID,
-                title: movie.Title,
-                poster_path: movie.Poster,
-                release_date: movie.Year + '-01-01', // OMDb only gives year for most movies
-                overview: movie.Plot,
-                director: movie.Director,
-                genre: movie.Genre,
-                runtime: movie.Runtime,
-            };
         });
 
         const results = await Promise.all(moviePromises);
@@ -154,6 +159,13 @@ export const fetchUpcomingMovies = async () => {
         return FALLBACK_DATA;
     } catch (error) {
         console.error('Error fetching upcoming movies:', error);
+
+        // Handle SSL certificate errors specifically
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        if (errorMessage.includes('SSL') || errorMessage.includes('certificate')) {
+            console.warn('SSL Certificate Error detected. Using fallback data.');
+        }
+
         console.log('Using fallback data for upcoming movies due to error');
         isUsingFallbackData = true;
         return FALLBACK_DATA;
@@ -168,7 +180,7 @@ export const fetchMovieDetails = async (imdbID: string) => {
         const response = await fetch(`${BASE_URL}/?apikey=${API_KEY}&i=${imdbID}&plot=full`);
 
         if (!response.ok) {
-            throw new Error('Failed to fetch movie details');
+            throw new Error(`Failed to fetch movie details: Status ${response.status}`);
         }
 
         const movie = await response.json();
@@ -180,6 +192,32 @@ export const fetchMovieDetails = async (imdbID: string) => {
         return movie;
     } catch (error) {
         console.error('Error fetching movie details:', error);
+
+        // Handle SSL certificate errors specifically
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        if (errorMessage.includes('SSL') || errorMessage.includes('certificate')) {
+            console.warn('SSL Certificate Error detected when fetching movie details.');
+
+            // Try to find a matching movie in fallback data
+            const fallbackMovie = FALLBACK_DATA.find(movie => movie.id === imdbID);
+            if (fallbackMovie) {
+                console.log('Using fallback data for movie details');
+                return {
+                    Title: fallbackMovie.title,
+                    Year: fallbackMovie.release_date.split('-')[0],
+                    Released: fallbackMovie.release_date,
+                    Runtime: fallbackMovie.runtime,
+                    Genre: fallbackMovie.genre,
+                    Director: fallbackMovie.director,
+                    Plot: fallbackMovie.overview,
+                    Poster: fallbackMovie.poster_path,
+                    imdbID: fallbackMovie.id,
+                    imdbRating: "N/A",
+                    Response: "True"
+                };
+            }
+        }
+
         throw error;
     }
 };
@@ -225,9 +263,22 @@ export const testApiConnection = async () => {
             apiKey: API_KEY,
         };
     } catch (error) {
+        console.error('API connection test error:', error);
+
+        // Check for specific SSL-related error messages
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        if (errorMessage.includes('SSL') || errorMessage.includes('certificate')) {
+            return {
+                success: false,
+                message: `SSL Certificate Error: ${errorMessage}. The application is using fallback data.`,
+                apiKey: API_KEY,
+                useFallback: true,
+            };
+        }
+
         return {
             success: false,
-            message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            message: `Error: ${errorMessage}`,
             apiKey: API_KEY,
         };
     }

@@ -2,7 +2,7 @@ import { Pagination } from '@/components/ui/pagination';
 import ClientLayout from '@/layouts/ClientLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 interface Film {
@@ -45,6 +45,21 @@ export default function Index({ films, genres, filters }: FilmsProps) {
     const [headerRef, headerInView] = useInView({ triggerOnce: true, threshold: 0.1 });
     const [filmsRef, filmsInView] = useInView({ triggerOnce: true, threshold: 0.1 });
 
+    // Define applyFilters with useCallback to avoid dependency issues
+    const applyFilters = useCallback(() => {
+        router.get(
+            '/films',
+            {
+                search,
+                genre: selectedGenre,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    }, [search, selectedGenre]);
+
     // Parallax effect
     useEffect(() => {
         const handleScroll = () => {
@@ -62,21 +77,9 @@ export default function Index({ films, genres, filters }: FilmsProps) {
         }, 300); // Add a small debounce for better UX
 
         return () => clearTimeout(debounceTimer);
-    }, [search, selectedGenre]);
+    }, [applyFilters]);
 
-    const applyFilters = () => {
-        router.get(
-            '/films',
-            {
-                search,
-                genre: selectedGenre,
-            },
-            {
-                preserveState: true,
-                replace: true,
-            },
-        );
-    };
+
 
     const clearFilters = () => {
         setSearch('');
@@ -127,12 +130,12 @@ export default function Index({ films, genres, filters }: FilmsProps) {
                 style={{
                     backgroundImage: 'url(/storage/images/cinema-pattern.jpg)',
                     backgroundSize: 'cover',
-                    backgroundPosition: 'center',
+                    backgroundPosition: 'right',
                     backgroundAttachment: 'fixed',
                 }}
             >
                 <div
-                    className="absolute inset-0 z-0 bg-gradient-to-b from-black/90 via-black/80 to-black/70"
+                    className="absolute inset-0 z-0 bg-gradient-to-b from-black/80 via-black/70 to-black/60"
                     style={{
                         transform: `translateY(${scrollY * 0.1}px)`,
                     }}
@@ -202,65 +205,66 @@ export default function Index({ films, genres, filters }: FilmsProps) {
                         transition={{ duration: 0.6, delay: 0.3 }}
                         className="mb-12 shadow-lg rounded-xl"
                     >
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-8">
-                                <div className="md:col-span-4">
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            id="search"
-                                            name="search"
-                                            value={search}
-                                            onChange={(e) => setSearch(e.target.value)}
-                                            placeholder="Search by title..."
-                                            className="focus:ring-primary/50 block w-full rounded-lg border-0 bg-gray-800/70 py-2.5 pr-10 pl-4 text-white placeholder-gray-500 shadow-inner focus:bg-gray-800/90 focus:ring-1"
-                                        />
-                                        {search && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setSearch('')}
-                                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white"
-                                            >
-                                                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="md:col-span-2">
-                                    <div className="relative">
-                                        <select
-                                            id="genre"
-                                            name="genre"
-                                            value={selectedGenre}
-                                            onChange={(e) => setSelectedGenre(e.target.value)}
-                                            className="focus:ring-primary/50 block w-full appearance-none rounded-lg border-0 bg-gray-800/70 py-2.5 pr-10 pl-4 text-white shadow-inner focus:bg-gray-800/90 focus:ring-1"
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-8">
+                            <div className="md:col-span-4">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        id="search"
+                                        name="search"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        placeholder="Search by title..."
+                                        className="focus:ring-primary/50 block w-full rounded-lg border-0 bg-gray-800/70 py-2.5 pr-10 pl-4 text-white placeholder-gray-500 shadow-inner focus:bg-gray-800/90 focus:ring-1"
+                                    />
+                                    {search && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSearch('')}
+                                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white"
                                         >
-                                            <option value="">All Genres</option>
-                                            {genres.map((genre) => (
-                                                <option key={genre} value={genre}>
-                                                    {genre}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                            <svg className="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                                                 <path
                                                     fillRule="evenodd"
-                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                                                     clipRule="evenodd"
                                                 />
                                             </svg>
-                                        </div>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <div className="relative">
+                                    <select
+                                        id="genre"
+                                        name="genre"
+                                        value={selectedGenre}
+                                        onChange={(e) => setSelectedGenre(e.target.value)}
+                                        className="focus:ring-primary/50 block w-full appearance-none rounded-lg border-0 bg-gray-800/70 py-2.5 pr-10 pl-4 text-white shadow-inner focus:bg-gray-800/90 focus:ring-1"
+                                    >
+                                        <option value="">All Genres</option>
+                                        {genres.map((genre) => (
+                                            <option key={genre} value={genre}>
+                                                {genre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                        <svg className="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path
+                                                fillRule="evenodd"
+                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                clipRule="evenodd"
+                                            />
+                                        </svg>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="flex items-end space-x-2 md:col-span-2">
+                            <div className="flex items-end space-x-2 md:col-span-2">
+                               
                                     <button
                                         type="button"
                                         onClick={clearFilters}
@@ -268,20 +272,8 @@ export default function Index({ films, genres, filters }: FilmsProps) {
                                     >
                                         Clear Filters
                                     </button>
-
-                                    {(search || selectedGenre) && (
-                                        <button
-                                            type="button"
-                                            onClick={clearFilters}
-                                            className="flex items-center justify-center rounded-lg bg-gray-800 p-2.5 text-gray-400 transition-colors duration-200 hover:bg-gray-700 hover:text-white focus:ring-2 focus:ring-gray-600"
-                                            aria-label="Clear filters"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    )}
-                                </div>
+                                
+                            </div>
 
                             {/* Applied filters */}
                             {(search || selectedGenre) && (

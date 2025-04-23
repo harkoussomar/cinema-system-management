@@ -15,6 +15,8 @@ use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Notifications\TicketConfirmationNotification;
 use Illuminate\Support\Facades\Notification;
+use Stripe\StripeClient;
+use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
 {
@@ -119,37 +121,72 @@ class ReservationController extends Controller
     }
 
     /**
-     * Process payment for a reservation.
+     * Process payment for a reservation using Stripe.
      */
     public function processPayment(Request $request, Reservation $reservation)
     {
         $validated = $request->validate([
             'payment_method' => 'required|string|in:credit_card,paypal',
-            // Additional payment fields would go here in a real implementation
+            'payment_method_id' => 'nullable|string',
+            'cardholder_name' => 'nullable|string|max:255',
         ]);
 
-        // In a real app, you would integrate with a payment gateway here
-        // For this demo, we'll just mark the payment as completed
+        // Calculate total price
+        $totalAmount = $reservation->reservationSeats->sum('price');
 
-        // Create payment record
-        $payment = Payment::create([
-            'reservation_id' => $reservation->id,
-            'amount' => $reservation->total_price,
-            'status' => 'completed',
-            'payment_method' => $validated['payment_method'],
-            'transaction_id' => Str::random(10),
-        ]);
+        try {
+            // Initialize Stripe with your secret key
+            $stripe = new StripeClient(env('STRIPE_SECRET_KEY'));
 
-        // Update reservation and seat status
-        $reservation->update(['status' => 'confirmed']);
+            // Create a payment intent with simple parameters
+            $paymentIntent = $stripe->paymentIntents->create([
+                'amount' => $totalAmount * 100, // Amount in cents
+                'currency' => 'usd',
+                'payment_method' => $validated['payment_method_id'],
+                'description' => 'Cinema ticket reservation #' . $reservation->id,
+                'confirm' => true, // Confirm immediately rather than requiring a separate API call
+                'payment_method_types' => ['card'], // Limit to card payments only for faster processing
+                'metadata' => [
+                    'reservation_id' => $reservation->id,
+                ],
+            ]);
 
-        $seatIds = $reservation->reservationSeats->pluck('seat_id');
-        Seat::whereIn('id', $seatIds)->update(['status' => 'sold']);
+            // If payment successful, update records
+            if ($paymentIntent->status === 'succeeded' || $paymentIntent->status === 'processing') {
+                // Create payment record
+                $payment = Payment::create([
+                    'reservation_id' => $reservation->id,
+                    'amount' => $totalAmount,
+                    'status' => 'completed',
+                    'payment_method' => $validated['payment_method'],
+                    'transaction_id' => $paymentIntent->id,
+                ]);
 
-        // Send ticket confirmation email
-        $this->sendTicketConfirmationEmail($reservation);
+                // Update reservation and seat status
+                $reservation->update(['status' => 'confirmed']);
 
-        return redirect()->route('reservations.confirmation', $reservation);
+                $seatIds = $reservation->reservationSeats->pluck('seat_id');
+                Seat::whereIn('id', $seatIds)->update(['status' => 'sold']);
+
+                // Send ticket confirmation email asynchronously if possible
+                // This would be better handled with a queue job in production
+                $this->sendTicketConfirmationEmail($reservation);
+
+                return redirect()->route('reservations.confirmation', $reservation);
+            }
+
+            // Payment requires additional action or failed
+            return back()->withErrors([
+                'payment' => 'Payment processing failed: ' . ($paymentIntent->last_payment_error?->message ?? 'Unknown error'),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Stripe payment failed: ' . $e->getMessage());
+
+            return back()->withErrors([
+                'payment' => 'Payment processing failed: ' . $e->getMessage(),
+            ]);
+        }
     }
 
     /**

@@ -1,12 +1,12 @@
 import AdminLayout from '@/layouts/AdminLayout';
 import { CalendarIcon } from '@heroicons/react/24/outline';
 import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon.js';
-import FilmIcon from '@heroicons/react/24/outline/FilmIcon.js';
 import ClockIcon from '@heroicons/react/24/outline/ClockIcon.js';
 import CurrencyDollarIcon from '@heroicons/react/24/outline/CurrencyDollarIcon.js';
+import FilmIcon from '@heroicons/react/24/outline/FilmIcon.js';
 import { Head, Link, useForm } from '@inertiajs/react';
-import React from 'react';
 import { motion } from 'framer-motion';
+import React, { useMemo, useState } from 'react';
 
 // Animation variants
 const containerVariants = {
@@ -25,7 +25,7 @@ const itemVariants = {
     visible: {
         opacity: 1,
         y: 0,
-        transition: { type: 'spring', stiffness: 100 }
+        transition: { type: 'spring', stiffness: 100 },
     },
 };
 
@@ -51,19 +51,49 @@ interface Props {
 }
 
 export default function Edit({ screening, films }: Props) {
+    // Parse the screening start time
+    const startDate = new Date(screening.start_time);
+
+    // Set initial values for date and time selectors
+    const [selectedDate, setSelectedDate] = useState<string>(startDate.toISOString().split('T')[0]);
+
+    const [selectedTime, setSelectedTime] = useState<string>(
+        `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`,
+    );
+
     const { data, setData, errors, put, processing } = useForm({
         film_id: screening.film_id.toString(),
-        start_time: formatDateTimeLocal(screening.start_time),
+        start_time: '',
         room: screening.room,
         price: screening.price.toString(),
         is_active: screening.is_active,
     });
 
-    // Format date for datetime-local input
-    function formatDateTimeLocal(dateString: string): string {
-        const date = new Date(dateString);
-        return date.toISOString().slice(0, 16);
-    }
+    // Combine the date and time into a single ISO string for submit
+    const updateDateTime = () => {
+        if (selectedDate && selectedTime) {
+            const dateTime = `${selectedDate}T${selectedTime}`;
+            setData('start_time', dateTime);
+        }
+    };
+
+    // Update the start_time whenever the date or time changes
+    React.useEffect(() => {
+        updateDateTime();
+    }, [selectedDate, selectedTime]);
+
+    // Generate time options every 15 minutes
+    const timeOptions = useMemo(() => {
+        const options = [];
+        for (let hour = 9; hour <= 23; hour++) {
+            for (let minute = 0; minute < 60; minute += 15) {
+                const formattedHour = hour.toString().padStart(2, '0');
+                const formattedMinute = minute.toString().padStart(2, '0');
+                options.push(`${formattedHour}:${formattedMinute}`);
+            }
+        }
+        return options;
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -71,18 +101,13 @@ export default function Edit({ screening, films }: Props) {
     };
 
     // Find the selected film
-    const selectedFilm = films.find(film => film.id.toString() === data.film_id);
+    const selectedFilm = films.find((film) => film.id.toString() === data.film_id);
 
     return (
         <AdminLayout title="Edit Screening" subtitle="Modify screening details">
             <Head title="Edit Screening" />
 
-            <motion.div
-                className="container px-4 py-6 mx-auto"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-            >
+            <motion.div className="container px-4 py-6 mx-auto" variants={containerVariants} initial="hidden" animate="visible">
                 {/* Back link */}
                 <motion.div className="mb-6" variants={itemVariants}>
                     <Link
@@ -122,19 +147,19 @@ export default function Edit({ screening, films }: Props) {
                             <motion.div
                                 className="p-5 border rounded-lg border-border bg-muted/20"
                                 variants={itemVariants}
-                                whileHover={{ y: -5, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                                whileHover={{ y: -5, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <h3 className="mb-4 text-md font-medium text-foreground">Film Selection</h3>
+                                <h3 className="mb-4 font-medium text-md text-foreground">Film Selection</h3>
                                 <div>
-                                    <label htmlFor="film_id" className="mb-1.5 block text-sm font-medium text-foreground">
+                                    <label htmlFor="film_id" className="text-foreground mb-1.5 block text-sm font-medium">
                                         Select Film <span className="text-destructive">*</span>
                                     </label>
                                     <select
                                         id="film_id"
                                         value={data.film_id}
                                         onChange={(e) => setData('film_id', e.target.value)}
-                                        className={`w-full rounded-md border px-3 py-2.5 bg-background text-foreground border-input focus:border-primary focus:ring-primary/30 placeholder:text-muted-foreground ${
+                                        className={`bg-background text-foreground border-input focus:border-primary focus:ring-primary/30 placeholder:text-muted-foreground w-full rounded-md border px-3 py-2.5 ${
                                             errors.film_id ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
                                         }`}
                                         required
@@ -146,7 +171,7 @@ export default function Edit({ screening, films }: Props) {
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.film_id && <p className="mt-1.5 text-sm text-destructive">{errors.film_id}</p>}
+                                    {errors.film_id && <p className="text-destructive mt-1.5 text-sm">{errors.film_id}</p>}
                                 </div>
 
                                 {selectedFilm && (
@@ -172,35 +197,57 @@ export default function Edit({ screening, films }: Props) {
                             <motion.div
                                 className="p-5 border rounded-lg border-border bg-muted/20"
                                 variants={itemVariants}
-                                whileHover={{ y: -5, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                                whileHover={{ y: -5, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <h3 className="mb-4 text-md font-medium text-foreground">Time and Location</h3>
+                                <h3 className="mb-4 font-medium text-md text-foreground">Time and Location</h3>
                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
-                                        <label htmlFor="start_time" className="mb-1.5 block text-sm font-medium text-foreground">
-                                            Date & Time <span className="text-destructive">*</span>
+                                        <label htmlFor="screening_date" className="text-foreground mb-1.5 block text-sm font-medium">
+                                            Screening Date <span className="text-destructive">*</span>
                                         </label>
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                                 <CalendarIcon className="w-5 h-5 text-muted-foreground" />
                                             </div>
                                             <input
-                                                id="start_time"
-                                                type="datetime-local"
-                                                value={data.start_time}
-                                                onChange={(e) => setData('start_time', e.target.value)}
-                                                className={`w-full rounded-md border py-2.5 pl-10 pr-3 bg-background text-foreground border-input focus:border-primary focus:ring-primary/30 placeholder:text-muted-foreground ${
-                                                    errors.start_time ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
-                                                }`}
+                                                id="screening_date"
+                                                type="date"
+                                                value={selectedDate}
+                                                onChange={(e) => setSelectedDate(e.target.value)}
+                                                className={`bg-background text-foreground border-input focus:border-primary focus:ring-primary/30 placeholder:text-muted-foreground w-full rounded-md border py-2.5 pr-3 pl-10`}
                                                 required
                                             />
                                         </div>
-                                        {errors.start_time && <p className="mt-1.5 text-sm text-destructive">{errors.start_time}</p>}
+                                        {errors.start_time && <p className="text-destructive mt-1.5 text-sm">{errors.start_time}</p>}
                                     </div>
 
                                     <div>
-                                        <label htmlFor="room" className="mb-1.5 block text-sm font-medium text-foreground">
+                                        <label htmlFor="screening_time" className="text-foreground mb-1.5 block text-sm font-medium">
+                                            Screening Time <span className="text-destructive">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                                <ClockIcon className="w-5 h-5 text-muted-foreground" />
+                                            </div>
+                                            <select
+                                                id="screening_time"
+                                                value={selectedTime}
+                                                onChange={(e) => setSelectedTime(e.target.value)}
+                                                className={`bg-background text-foreground border-input focus:border-primary focus:ring-primary/30 placeholder:text-muted-foreground w-full rounded-md border py-2.5 pr-3 pl-10`}
+                                                required
+                                            >
+                                                {timeOptions.map((time) => (
+                                                    <option key={time} value={time}>
+                                                        {time}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="room" className="text-foreground mb-1.5 block text-sm font-medium">
                                             Room/Theater <span className="text-destructive">*</span>
                                         </label>
                                         <div className="relative">
@@ -212,17 +259,17 @@ export default function Edit({ screening, films }: Props) {
                                                 value={data.room}
                                                 onChange={(e) => setData('room', e.target.value)}
                                                 placeholder="e.g. Theater 1, IMAX, Screen A"
-                                                className={`w-full rounded-md border py-2.5 pl-10 pr-3 bg-background text-foreground border-input focus:border-primary focus:ring-primary/30 placeholder:text-muted-foreground ${
+                                                className={`bg-background text-foreground border-input focus:border-primary focus:ring-primary/30 placeholder:text-muted-foreground w-full rounded-md border py-2.5 pr-3 pl-10 ${
                                                     errors.room ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
                                                 }`}
                                                 required
                                             />
                                         </div>
-                                        {errors.room && <p className="mt-1.5 text-sm text-destructive">{errors.room}</p>}
+                                        {errors.room && <p className="text-destructive mt-1.5 text-sm">{errors.room}</p>}
                                     </div>
 
                                     <div>
-                                        <label htmlFor="price" className="mb-1.5 block text-sm font-medium text-foreground">
+                                        <label htmlFor="price" className="text-foreground mb-1.5 block text-sm font-medium">
                                             Ticket Price <span className="text-destructive">*</span>
                                         </label>
                                         <div className="relative">
@@ -237,18 +284,17 @@ export default function Edit({ screening, films }: Props) {
                                                 value={data.price}
                                                 onChange={(e) => setData('price', e.target.value)}
                                                 placeholder="0.00"
-                                                className={`w-full rounded-md border py-2.5 pl-10 pr-3 bg-background text-foreground border-input focus:border-primary focus:ring-primary/30 placeholder:text-muted-foreground ${
+                                                className={`bg-background text-foreground border-input focus:border-primary focus:ring-primary/30 placeholder:text-muted-foreground w-full rounded-md border py-2.5 pr-3 pl-10 ${
                                                     errors.price ? 'border-destructive focus:border-destructive focus:ring-destructive/30' : ''
                                                 }`}
                                                 required
                                             />
                                         </div>
-                                        {errors.price && <p className="mt-1.5 text-sm text-destructive">{errors.price}</p>}
+                                        {errors.price && <p className="text-destructive mt-1.5 text-sm">{errors.price}</p>}
                                     </div>
 
                                     <div className="flex items-center p-3 border rounded-md border-border bg-muted/10">
-                                        <motion.input
-                                            whileTap={{ scale: 0.9 }}
+                                        <input
                                             type="checkbox"
                                             id="is_active"
                                             checked={data.is_active}
@@ -262,17 +308,29 @@ export default function Edit({ screening, films }: Props) {
                                 </div>
                             </motion.div>
 
+                            {/* Seating Information (Read-only) */}
+                            <motion.div className="p-5 border rounded-lg border-border bg-muted/20" variants={itemVariants}>
+                                <h3 className="mb-4 font-medium text-md text-foreground">Seating Information</h3>
+                                <div className="p-4 text-sm border rounded-md bg-muted/10 border-border">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-muted-foreground">Total Seats:</span>
+                                        <span className="font-medium text-foreground">{screening.total_seats}</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        The seating configuration cannot be modified after creation. To change the seating layout, you would need to
+                                        create a new screening.
+                                    </p>
+                                </div>
+                            </motion.div>
+
                             <motion.div className="p-5 border-t" variants={itemVariants}>
                                 <p className="mb-6 text-sm text-muted-foreground">
-                                    <strong>Note:</strong> Editing a screening will not affect existing reservations. You cannot modify the seating layout
-                                    after creation.
+                                    <strong>Note:</strong> Editing a screening will not affect existing reservations. You cannot modify the seating
+                                    layout after creation.
                                 </p>
 
                                 <div className="flex justify-end space-x-3">
-                                    <motion.div
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                    >
+                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                         <Link
                                             href={route('admin.screenings.show', { screening: screening.id })}
                                             className="inline-flex items-center px-4 py-2 text-sm font-medium transition border rounded-md border-border text-foreground hover:bg-muted"
@@ -283,7 +341,7 @@ export default function Edit({ screening, films }: Props) {
                                     <motion.button
                                         type="submit"
                                         disabled={processing}
-                                        className="inline-flex items-center px-4 py-2 text-sm font-medium transition shadow-sm text-white bg-primary hover:bg-primary/90 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition rounded-md shadow-sm bg-primary hover:bg-primary/90 focus:ring-primary/30 focus:ring-2 focus:outline-none disabled:opacity-50"
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                     >

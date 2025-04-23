@@ -1,8 +1,8 @@
-import { TicketIcon, UserIcon, Bars3Icon, XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { Link, usePage, router } from '@inertiajs/react';
-import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Bars3Icon, MagnifyingGlassIcon, TicketIcon, UserIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Link, router, usePage } from '@inertiajs/react';
 import axios from 'axios';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 
 interface User {
     id: number;
@@ -59,19 +59,19 @@ const Header = () => {
             opacity: 1,
             y: 0,
             transition: {
-                staggerChildren: 0.1
-            }
-        }
+                staggerChildren: 0.1,
+            },
+        },
     };
 
     const itemVariants = {
         hidden: { opacity: 0, y: -10 },
-        visible: { opacity: 1, y: 0 }
+        visible: { opacity: 1, y: 0 },
     };
 
     const logoVariants = {
         initial: { scale: 1 },
-        hover: { scale: 1.05, transition: { duration: 0.2 } }
+        hover: { scale: 1.05, transition: { duration: 0.2 } },
     };
 
     // Handle search input change
@@ -108,19 +108,15 @@ const Header = () => {
     };
 
     return (
-        <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled
-            ? 'bg-black/95 backdrop-blur-md shadow-md border-b border-white/10'
-            : 'bg-black/85 border-b border-white/20'
-            }`}>
+        <header
+            className={`sticky top-0 z-50 transition-all duration-300 ${
+                isScrolled ? 'border-b border-white/10 bg-black/95 shadow-md backdrop-blur-md' : 'border-b border-white/20 bg-black/85'
+            }`}
+        >
             <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo and Brand */}
-                    <motion.div
-                        className="flex items-center"
-                        initial="initial"
-                        whileHover="hover"
-                        variants={logoVariants}
-                    >
+                    <motion.div className="flex items-center" initial="initial" whileHover="hover" variants={logoVariants}>
                         <Link href="/" className="flex items-center flex-shrink-0">
                             <img className="w-10 h-10" src="/logo.png" alt="CineVerse" />
                             <span className="ml-2 text-xl font-bold tracking-tight text-white">
@@ -144,7 +140,7 @@ const Header = () => {
                                     className="relative px-3 py-2 text-sm font-medium text-white transition-colors rounded-md group hover:text-primary"
                                 >
                                     {item.name}
-                                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                                    <span className="bg-primary absolute bottom-0 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full"></span>
                                 </Link>
                             </motion.div>
                         ))}
@@ -155,10 +151,10 @@ const Header = () => {
                                 className="relative inline-block px-3 py-2 text-sm font-medium transition-colors rounded-md group text-primary hover:text-primary-light"
                             >
                                 <span className="flex items-center">
-                                    <TicketIcon className="w-4 h-4 mr-1.5" />
+                                    <TicketIcon className="mr-1.5 h-4 w-4" />
                                     Find Reservation
                                 </span>
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 scale-x-0 bg-primary transition-transform duration-300 group-hover:scale-x-100 origin-left"></div>
+                                <div className="bg-primary absolute right-0 bottom-0 left-0 h-0.5 origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"></div>
                             </Link>
                         </motion.div>
                     </motion.nav>
@@ -196,12 +192,12 @@ const Header = () => {
                                             <UserIcon className="w-4 h-4 mr-2" />
                                             {user.name}
                                         </motion.button>
-                                        <div className="absolute right-0 w-48 mt-2 origin-top-right rounded-md shadow-lg bg-black/95 ring-1 ring-white/20 focus:outline-none transition-all duration-300 opacity-0 invisible transform translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 hover:opacity-100 hover:visible hover:translate-y-0" style={{ transitionDelay: '150ms' }}>
+                                        <div
+                                            className="absolute right-0 invisible w-48 mt-2 transition-all duration-300 origin-top-right transform translate-y-1 rounded-md shadow-lg opacity-0 bg-black/95 ring-1 ring-white/20 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 hover:visible hover:translate-y-0 hover:opacity-100 focus:outline-none"
+                                            style={{ transitionDelay: '150ms' }}
+                                        >
                                             <div className="py-1">
-                                                <Link
-                                                    href="/account"
-                                                    className="block px-4 py-2 text-sm text-white hover:bg-white/10"
-                                                >
+                                                <Link href="/account" className="block px-4 py-2 text-sm text-white hover:bg-white/10">
                                                     Account Settings
                                                 </Link>
                                                 <Link
@@ -312,14 +308,14 @@ const Header = () => {
                                     <input
                                         type="text"
                                         placeholder="Search for movies, theaters, showtimes..."
-                                        className="w-full py-3 pl-4 pr-10 text-white border rounded-md bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        className="w-full py-3 pl-4 pr-10 text-white border rounded-md focus:ring-primary border-white/20 bg-white/10 focus:border-transparent focus:ring-2 focus:outline-none"
                                         autoFocus
                                         value={searchQuery}
                                         onChange={handleSearchChange}
                                     />
                                     <button
                                         type="submit"
-                                        className="absolute inset-y-0 right-0 flex items-center px-4 text-white/70 hover:text-primary"
+                                        className="absolute inset-y-0 right-0 flex items-center px-4 hover:text-primary text-white/70"
                                     >
                                         <MagnifyingGlassIcon className="w-5 h-5" />
                                     </button>
@@ -336,7 +332,7 @@ const Header = () => {
                                         </div>
                                     ) : searchResults.length > 0 ? (
                                         <motion.div
-                                            className="overflow-hidden border rounded-md bg-black/95 border-white/20"
+                                            className="overflow-hidden border rounded-md border-white/20 bg-black/95"
                                             initial={{ opacity: 0, y: -5 }}
                                             animate={{ opacity: 1, y: 0 }}
                                         >
@@ -353,9 +349,7 @@ const Header = () => {
                                                         )}
                                                         <div className="ml-3">
                                                             <h4 className="text-sm font-medium text-white">{result.title}</h4>
-                                                            {result.subtitle && (
-                                                                <p className="text-xs text-white/70">{result.subtitle}</p>
-                                                            )}
+                                                            {result.subtitle && <p className="text-xs text-white/70">{result.subtitle}</p>}
                                                         </div>
                                                     </Link>
                                                 ))}
@@ -380,7 +374,7 @@ const Header = () => {
                                         setSearchQuery('');
                                         setSearchResults([]);
                                     }}
-                                    className="text-sm text-white/70 hover:text-primary"
+                                    className="text-sm hover:text-primary text-white/70"
                                 >
                                     Close
                                 </button>
@@ -400,12 +394,12 @@ const Header = () => {
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <div className="px-2 pt-2 pb-3 space-y-1 border-b bg-black/95 border-white/20">
+                        <div className="px-2 pt-2 pb-3 space-y-1 border-b border-white/20 bg-black/95">
                             {mainNavItems.map((item) => (
                                 <Link
                                     key={item.name}
                                     href={item.href}
-                                    className="block px-3 py-2 text-base font-medium text-white rounded-md hover:bg-white/10 hover:text-primary"
+                                    className="block px-3 py-2 text-base font-medium text-white rounded-md hover:text-primary hover:bg-white/10"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
                                     {item.name}
@@ -426,13 +420,13 @@ const Header = () => {
                                     <input
                                         type="text"
                                         placeholder="Search..."
-                                        className="w-full py-2 pl-4 pr-10 text-white border rounded-md bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        className="w-full py-2 pl-4 pr-10 text-white border rounded-md focus:ring-primary border-white/20 bg-white/10 focus:border-transparent focus:ring-2 focus:outline-none"
                                         value={searchQuery}
                                         onChange={handleSearchChange}
                                     />
                                     <button
                                         type="submit"
-                                        className="absolute inset-y-0 right-0 flex items-center px-4 text-white/70 hover:text-primary"
+                                        className="absolute inset-y-0 right-0 flex items-center px-4 hover:text-primary text-white/70"
                                     >
                                         <MagnifyingGlassIcon className="w-5 h-5" />
                                     </button>
@@ -440,7 +434,7 @@ const Header = () => {
 
                                 {/* Mobile Search Results */}
                                 {searchResults.length > 0 && searchQuery.length >= 2 && (
-                                    <div className="absolute z-50 w-full mt-1 overflow-hidden border rounded-md shadow-lg bg-black/95 border-white/20">
+                                    <div className="absolute z-50 w-full mt-1 overflow-hidden border rounded-md shadow-lg border-white/20 bg-black/95">
                                         <div className="overflow-y-auto max-h-48">
                                             {searchResults.map((result) => (
                                                 <Link
@@ -454,9 +448,7 @@ const Header = () => {
                                                     )}
                                                     <div className="ml-2">
                                                         <h4 className="text-xs font-medium text-white">{result.title}</h4>
-                                                        {result.subtitle && (
-                                                            <p className="text-xs text-white/70">{result.subtitle}</p>
-                                                        )}
+                                                        {result.subtitle && <p className="text-xs text-white/70">{result.subtitle}</p>}
                                                     </div>
                                                 </Link>
                                             ))}

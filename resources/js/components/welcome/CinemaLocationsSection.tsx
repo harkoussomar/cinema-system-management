@@ -117,13 +117,13 @@ const CinemaLocationsSection = () => {
                         <div className="relative overflow-hidden rounded-lg shadow-lg h-[500px]">
                             {!mapLoaded && (
                                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
-                                    <div className="w-12 h-12 border-4 border-t-primary border-white/20 rounded-full animate-spin" />
+                                    <div className="w-12 h-12 border-4 rounded-full border-t-primary border-white/20 animate-spin" />
                                 </div>
                             )}
                             <MapContainer
                                 center={selectedCinema ? selectedCinema.position : [33.9715, -6.8498]} // Rabat center coordinates
                                 zoom={selectedCinema ? 14 : 12}
-                                className="h-full w-full z-0"
+                                className="z-0 w-full h-full"
                                 whenReady={() => setMapLoaded(true)}
                             >
                                 <TileLayer
@@ -179,7 +179,7 @@ const CinemaLocationsSection = () => {
                                 href={`https://maps.google.com/?q=${selectedCinema.position[0]},${selectedCinema.position[1]}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-5 py-2 text-sm font-medium transition-colors rounded-md bg-primary text-white hover:bg-primary/90"
+                                className="px-5 py-2 text-sm font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary/90"
                             >
                                 Get Directions
                             </a>
@@ -199,7 +199,7 @@ const CinemaLocationsSection = () => {
                             </div>
                         </div>
 
-                        <div className="flex justify-between mt-6 pt-4 border-t border-white/10">
+                        <div className="flex justify-between pt-4 mt-6 border-t border-white/10">
                             <button className="text-sm font-medium text-primary hover:text-primary/80">
                                 View Showtimes
                             </button>

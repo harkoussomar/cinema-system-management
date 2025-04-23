@@ -151,10 +151,15 @@ export default function Create() {
                 }
             } else {
                 setSearchError(response.data.message || 'Error searching for films');
+                console.error('OMDB search error:', response.data.message);
             }
         } catch (error) {
-            setSearchError('Error connecting to the OMDB API');
-            console.error('OMDB search error', error);
+            console.error('OMDB search error:', error);
+            if (axios.isAxiosError(error) && error.response) {
+                setSearchError(`Error connecting to the OMDB API: ${error.response.data.message || error.message}`);
+            } else {
+                setSearchError('Error connecting to the OMDB API. Please try again later.');
+            }
         } finally {
             setIsSearching(false);
         }

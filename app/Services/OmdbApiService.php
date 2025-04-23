@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 class OmdbApiService
 {
     protected $apiKey;
-    protected $baseUrl = 'http://www.omdbapi.com/';
+    protected $baseUrl = 'https://www.omdbapi.com/';
 
     public function __construct()
     {
@@ -25,6 +25,7 @@ class OmdbApiService
     public function searchByTitle(string $query, int $page = 1): array
     {
         if (empty($this->apiKey)) {
+            Log::error('OMDB API key is not configured');
             return [
                 'success' => false,
                 'message' => 'OMDB API key is not configured',
@@ -33,12 +34,15 @@ class OmdbApiService
         }
 
         try {
-            $response = Http::get($this->baseUrl, [
-                'apikey' => $this->apiKey,
-                's' => $query,
-                'page' => $page,
-                'type' => 'movie'
-            ]);
+            $response = Http::timeout(10)
+                ->retry(3, 100)
+                ->withoutVerifying()
+                ->get($this->baseUrl, [
+                    'apikey' => $this->apiKey,
+                    's' => $query,
+                    'page' => $page,
+                    'type' => 'movie'
+                ]);
 
             if ($response->successful() && $response->json('Response') === 'True') {
                 return [
@@ -48,17 +52,27 @@ class OmdbApiService
                 ];
             }
 
-            return [
-                'success' => false,
-                'message' => $response->json('Error') ?? 'Failed to retrieve data from OMDB API',
-                'data' => []
-            ];
-        } catch (\Exception $e) {
-            Log::error('OMDB API Error: ' . $e->getMessage());
+            $errorMessage = $response->json('Error') ?? 'Failed to retrieve data from OMDB API';
+            Log::error('OMDB API Error: ' . $errorMessage, [
+                'status' => $response->status(),
+                'query' => $query,
+                'response' => $response->json()
+            ]);
 
             return [
                 'success' => false,
-                'message' => 'Error connecting to OMDB API',
+                'message' => $errorMessage,
+                'data' => []
+            ];
+        } catch (\Exception $e) {
+            Log::error('OMDB API Error: ' . $e->getMessage(), [
+                'query' => $query,
+                'exception' => get_class($e)
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Error connecting to OMDB API: ' . $e->getMessage(),
                 'data' => []
             ];
         }
@@ -73,6 +87,7 @@ class OmdbApiService
     public function getFilmDetails(string $imdbId): array
     {
         if (empty($this->apiKey)) {
+            Log::error('OMDB API key is not configured');
             return [
                 'success' => false,
                 'message' => 'OMDB API key is not configured',
@@ -81,11 +96,14 @@ class OmdbApiService
         }
 
         try {
-            $response = Http::get($this->baseUrl, [
-                'apikey' => $this->apiKey,
-                'i' => $imdbId,
-                'plot' => 'full'
-            ]);
+            $response = Http::timeout(10)
+                ->retry(3, 100)
+                ->withoutVerifying()
+                ->get($this->baseUrl, [
+                    'apikey' => $this->apiKey,
+                    'i' => $imdbId,
+                    'plot' => 'full'
+                ]);
 
             if ($response->successful() && $response->json('Response') === 'True') {
                 return [
@@ -94,17 +112,27 @@ class OmdbApiService
                 ];
             }
 
-            return [
-                'success' => false,
-                'message' => $response->json('Error') ?? 'Failed to retrieve film details',
-                'data' => null
-            ];
-        } catch (\Exception $e) {
-            Log::error('OMDB API Error: ' . $e->getMessage());
+            $errorMessage = $response->json('Error') ?? 'Failed to retrieve film details';
+            Log::error('OMDB API Error: ' . $errorMessage, [
+                'status' => $response->status(),
+                'imdbId' => $imdbId,
+                'response' => $response->json()
+            ]);
 
             return [
                 'success' => false,
-                'message' => 'Error connecting to OMDB API',
+                'message' => $errorMessage,
+                'data' => null
+            ];
+        } catch (\Exception $e) {
+            Log::error('OMDB API Error: ' . $e->getMessage(), [
+                'imdbId' => $imdbId,
+                'exception' => get_class($e)
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Error connecting to OMDB API: ' . $e->getMessage(),
                 'data' => null
             ];
         }

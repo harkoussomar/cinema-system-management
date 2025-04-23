@@ -2,7 +2,7 @@ import AdminLayout from '@/layouts/AdminLayout';
 import { CalendarIcon, ClockIcon, FilmIcon, PencilIcon, UserIcon } from '@heroicons/react/24/outline';
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import React from 'react';
+import { formatDate } from '../../../utils/dateUtils';
 
 // Animation variants
 const containerVariants = {
@@ -21,7 +21,7 @@ const itemVariants = {
     visible: {
         opacity: 1,
         y: 0,
-        transition: { type: 'spring', stiffness: 100 }
+        transition: { type: 'spring', stiffness: 100 },
     },
 };
 
@@ -46,47 +46,31 @@ interface Props {
 }
 
 export default function Show({ film }: Props) {
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    };
-
     return (
         <AdminLayout title={film.title} subtitle="Film Details">
             <Head title={`Film: ${film.title}`} />
 
-            <motion.div
-                className="container px-4 py-6 mx-auto"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-            >
+            <motion.div className="container mx-auto px-4 py-6" variants={containerVariants} initial="hidden" animate="visible">
                 {/* Header with back and edit buttons */}
-                <motion.div
-                    className="flex items-center justify-between mb-6"
-                    variants={itemVariants}
-                >
+                <motion.div className="mb-6 flex items-center justify-between" variants={itemVariants}>
                     <div className="flex items-center">
                         <motion.div
-                            className="flex items-center justify-center w-10 h-10 mr-3 rounded-lg bg-primary/10"
+                            className="bg-primary/10 mr-3 flex h-10 w-10 items-center justify-center rounded-lg"
                             whileHover={{ scale: 1.1, rotate: 5 }}
-                            transition={{ type: "spring", stiffness: 400 }}
+                            transition={{ type: 'spring', stiffness: 400 }}
                         >
-                            <FilmIcon className="w-6 h-6 text-primary" />
+                            <FilmIcon className="text-primary h-6 w-6" />
                         </motion.div>
                         <div>
-                            <h1 className="text-2xl font-bold text-foreground">{film.title}</h1>
-                            <p className="text-sm text-muted-foreground">Film ID: {film.id}</p>
+                            <h1 className="text-foreground text-2xl font-bold">{film.title}</h1>
+                            <p className="text-muted-foreground text-sm">Film ID: {film.id}</p>
                         </div>
                     </div>
                     <div className="flex space-x-3">
                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                             <Link
                                 href={route('admin.films.index')}
-                                className="flex items-center px-4 py-2 text-sm font-medium transition border rounded-md border-border text-foreground hover:bg-muted"
+                                className="border-border text-foreground hover:bg-muted flex items-center rounded-md border px-4 py-2 text-sm font-medium transition"
                             >
                                 Back to Films
                             </Link>
@@ -94,9 +78,9 @@ export default function Show({ film }: Props) {
                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                             <Link
                                 href={route('admin.films.edit', { film: film.id })}
-                                className="flex items-center px-4 py-2 text-sm font-medium text-white transition rounded-md bg-primary hover:bg-primary/90"
+                                className="bg-primary hover:bg-primary/90 flex items-center rounded-md px-4 py-2 text-sm font-medium text-white transition"
                             >
-                                <PencilIcon className="w-4 h-4 mr-2" />
+                                <PencilIcon className="mr-2 h-4 w-4" />
                                 Edit Film
                             </Link>
                         </motion.div>
@@ -107,17 +91,17 @@ export default function Show({ film }: Props) {
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Poster and basic info */}
                     <motion.div
-                        className="col-span-1 overflow-hidden border rounded-lg shadow-sm border-border bg-card"
+                        className="border-border bg-card col-span-1 overflow-hidden rounded-lg border shadow-sm"
                         variants={itemVariants}
                         whileHover={{ y: -5 }}
                         transition={{ duration: 0.3 }}
                     >
                         <div className="p-6">
-                            <div className="flex flex-col items-center mb-4 space-y-4">
+                            <div className="mb-4 flex flex-col items-center space-y-4">
                                 <motion.div
-                                    className="overflow-hidden border rounded-lg shadow-md border-border h-auto w-full max-w-[250px]"
+                                    className="border-border h-auto w-full max-w-[250px] overflow-hidden rounded-lg border shadow-md"
                                     whileHover={{ scale: 1.02 }}
-                                    transition={{ type: "spring", stiffness: 300 }}
+                                    transition={{ type: 'spring', stiffness: 300 }}
                                 >
                                     <img
                                         src={
@@ -128,61 +112,45 @@ export default function Show({ film }: Props) {
                                                 : '/images/placeholder.png'
                                         }
                                         alt={film.title}
-                                        className="object-cover w-full h-full"
+                                        className="h-full w-full object-cover"
                                     />
                                 </motion.div>
 
                                 {film.is_featured && (
                                     <motion.span
-                                        className="inline-flex px-3 py-1 text-sm font-medium rounded-full bg-success/20 text-success"
+                                        className="bg-success/20 text-success inline-flex rounded-full px-3 py-1 text-sm font-medium"
                                         initial={{ scale: 0, opacity: 0 }}
                                         animate={{ scale: 1, opacity: 1 }}
-                                        transition={{ delay: 0.5, type: "spring" }}
+                                        transition={{ delay: 0.5, type: 'spring' }}
                                     >
                                         Featured Film
                                     </motion.span>
                                 )}
                             </div>
 
-                            <div className="pt-4 border-t border-border">
-                                <h3 className="mb-4 text-lg font-medium text-foreground">Quick Info</h3>
+                            <div className="border-border border-t pt-4">
+                                <h3 className="text-foreground mb-4 text-lg font-medium">Quick Info</h3>
                                 <ul className="space-y-3">
-                                    <motion.li
-                                        className="flex items-center"
-                                        whileHover={{ x: 5 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <UserIcon className="w-4 h-4 mr-2 text-muted-foreground" />
-                                        <span className="text-sm text-muted-foreground">Director: </span>
-                                        <span className="ml-1 text-sm font-medium text-foreground">{film.director}</span>
+                                    <motion.li className="flex items-center" whileHover={{ x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                                        <UserIcon className="text-muted-foreground mr-2 h-4 w-4" />
+                                        <span className="text-muted-foreground text-sm">Director: </span>
+                                        <span className="text-foreground ml-1 text-sm font-medium">{film.director}</span>
                                     </motion.li>
-                                    <motion.li
-                                        className="flex items-center"
-                                        whileHover={{ x: 5 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <CalendarIcon className="w-4 h-4 mr-2 text-muted-foreground" />
-                                        <span className="text-sm text-muted-foreground">Released: </span>
-                                        <span className="ml-1 text-sm font-medium text-foreground">{formatDate(film.release_date)}</span>
+                                    <motion.li className="flex items-center" whileHover={{ x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                                        <CalendarIcon className="text-muted-foreground mr-2 h-4 w-4" />
+                                        <span className="text-muted-foreground text-sm">Released: </span>
+                                        <span className="text-foreground ml-1 text-sm font-medium">{formatDate(film.release_date)}</span>
                                     </motion.li>
-                                    <motion.li
-                                        className="flex items-center"
-                                        whileHover={{ x: 5 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <ClockIcon className="w-4 h-4 mr-2 text-muted-foreground" />
-                                        <span className="text-sm text-muted-foreground">Duration: </span>
-                                        <span className="ml-1 text-sm font-medium text-foreground">{film.duration} minutes</span>
+                                    <motion.li className="flex items-center" whileHover={{ x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                                        <ClockIcon className="text-muted-foreground mr-2 h-4 w-4" />
+                                        <span className="text-muted-foreground text-sm">Duration: </span>
+                                        <span className="text-foreground ml-1 text-sm font-medium">{film.duration} minutes</span>
                                     </motion.li>
-                                    <motion.li
-                                        className="flex items-center"
-                                        whileHover={{ x: 5 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <FilmIcon className="w-4 h-4 mr-2 text-muted-foreground" />
-                                        <span className="text-sm text-muted-foreground">Genre: </span>
+                                    <motion.li className="flex items-center" whileHover={{ x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                                        <FilmIcon className="text-muted-foreground mr-2 h-4 w-4" />
+                                        <span className="text-muted-foreground text-sm">Genre: </span>
                                         <motion.span
-                                            className="inline-flex px-2 py-0.5 ml-1 text-xs font-medium rounded-full bg-primary/10 text-primary"
+                                            className="bg-primary/10 text-primary ml-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
                                             whileHover={{ scale: 1.1 }}
                                         >
                                             {film.genre}
@@ -197,56 +165,56 @@ export default function Show({ film }: Props) {
                     <div className="space-y-6 lg:col-span-2">
                         {/* Description */}
                         <motion.div
-                            className="overflow-hidden border rounded-lg shadow-sm border-border bg-card"
+                            className="border-border bg-card overflow-hidden rounded-lg border shadow-sm"
                             variants={itemVariants}
                             whileHover={{ y: -5 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <div className="p-4 border-b border-border">
-                                <h3 className="font-medium text-foreground">Description</h3>
+                            <div className="border-border border-b p-4">
+                                <h3 className="text-foreground font-medium">Description</h3>
                             </div>
                             <div className="p-6">
-                                <p className="text-sm leading-relaxed whitespace-pre-line text-foreground">{film.description}</p>
+                                <p className="text-foreground text-sm leading-relaxed whitespace-pre-line">{film.description}</p>
                             </div>
                         </motion.div>
 
                         {/* Screenings stats */}
                         <motion.div
-                            className="overflow-hidden border rounded-lg shadow-sm border-border bg-card"
+                            className="border-border bg-card overflow-hidden rounded-lg border shadow-sm"
                             variants={itemVariants}
                             whileHover={{ y: -5 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <div className="p-4 border-b border-border">
-                                <h3 className="font-medium text-foreground">Screenings Information</h3>
+                            <div className="border-border border-b p-4">
+                                <h3 className="text-foreground font-medium">Screenings Information</h3>
                             </div>
                             <div className="p-6">
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <motion.div
-                                        className="p-4 border rounded-lg bg-muted/30 border-border"
+                                        className="bg-muted/30 border-border rounded-lg border p-4"
                                         whileHover={{ scale: 1.03 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
+                                        transition={{ type: 'spring', stiffness: 300 }}
                                     >
-                                        <div className="mb-1 text-sm text-muted-foreground">Total Screenings</div>
-                                        <div className="text-2xl font-bold text-foreground">{film.screenings_count}</div>
+                                        <div className="text-muted-foreground mb-1 text-sm">Total Screenings</div>
+                                        <div className="text-foreground text-2xl font-bold">{film.screenings_count}</div>
                                     </motion.div>
                                     <motion.div
-                                        className="p-4 border rounded-lg bg-primary/10 border-border"
+                                        className="bg-primary/10 border-border rounded-lg border p-4"
                                         whileHover={{ scale: 1.03 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
+                                        transition={{ type: 'spring', stiffness: 300 }}
                                     >
-                                        <div className="mb-1 text-sm text-muted-foreground">Upcoming Screenings</div>
-                                        <div className="text-2xl font-bold text-primary">{film.future_screenings_count}</div>
+                                        <div className="text-muted-foreground mb-1 text-sm">Upcoming Screenings</div>
+                                        <div className="text-primary text-2xl font-bold">{film.future_screenings_count}</div>
                                     </motion.div>
                                 </div>
 
                                 <div className="mt-4">
-                                    <motion.div whileHover={{ x: 5 }} transition={{ type: "spring", stiffness: 300 }}>
+                                    <motion.div whileHover={{ x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
                                         <Link
                                             href={route('admin.screenings.index', { film_id: film.id })}
-                                            className="inline-flex items-center text-sm text-primary hover:text-primary/90"
+                                            className="text-primary hover:text-primary/90 inline-flex items-center text-sm"
                                         >
-                                            <CalendarIcon className="w-4 h-4 mr-1" />
+                                            <CalendarIcon className="mr-1 h-4 w-4" />
                                             View all screenings for this film
                                         </Link>
                                     </motion.div>
@@ -256,35 +224,26 @@ export default function Show({ film }: Props) {
 
                         {/* Metadata */}
                         <motion.div
-                            className="overflow-hidden border rounded-lg shadow-sm border-border bg-card"
+                            className="border-border bg-card overflow-hidden rounded-lg border shadow-sm"
                             variants={itemVariants}
                             whileHover={{ y: -5 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <div className="p-4 border-b border-border">
-                                <h3 className="font-medium text-foreground">Metadata</h3>
+                            <div className="border-border border-b p-4">
+                                <h3 className="text-foreground font-medium">Metadata</h3>
                             </div>
-                            <div className="divide-y divide-border">
-                                <motion.div
-                                    className="grid grid-cols-2 p-4"
-                                    whileHover={{ backgroundColor: "rgba(var(--primary), 0.05)" }}
-                                >
-                                    <div className="text-sm text-muted-foreground">Created</div>
-                                    <div className="text-sm text-foreground">{formatDate(film.created_at)}</div>
+                            <div className="divide-border divide-y">
+                                <motion.div className="grid grid-cols-2 p-4" whileHover={{ backgroundColor: 'rgba(var(--primary), 0.05)' }}>
+                                    <div className="text-muted-foreground text-sm">Created</div>
+                                    <div className="text-foreground text-sm">{formatDate(film.created_at)}</div>
                                 </motion.div>
-                                <motion.div
-                                    className="grid grid-cols-2 p-4"
-                                    whileHover={{ backgroundColor: "rgba(var(--primary), 0.05)" }}
-                                >
-                                    <div className="text-sm text-muted-foreground">Last Updated</div>
-                                    <div className="text-sm text-foreground">{formatDate(film.updated_at)}</div>
+                                <motion.div className="grid grid-cols-2 p-4" whileHover={{ backgroundColor: 'rgba(var(--primary), 0.05)' }}>
+                                    <div className="text-muted-foreground text-sm">Last Updated</div>
+                                    <div className="text-foreground text-sm">{formatDate(film.updated_at)}</div>
                                 </motion.div>
-                                <motion.div
-                                    className="grid grid-cols-2 p-4"
-                                    whileHover={{ backgroundColor: "rgba(var(--primary), 0.05)" }}
-                                >
-                                    <div className="text-sm text-muted-foreground">Film ID</div>
-                                    <div className="text-sm text-foreground">{film.id}</div>
+                                <motion.div className="grid grid-cols-2 p-4" whileHover={{ backgroundColor: 'rgba(var(--primary), 0.05)' }}>
+                                    <div className="text-muted-foreground text-sm">Film ID</div>
+                                    <div className="text-foreground text-sm">{film.id}</div>
                                 </motion.div>
                             </div>
                         </motion.div>
